@@ -7,5 +7,6 @@ extern "C"
 
 extern "C" void app_main(void)
 {
-    LCD lcd = LCD();              // Clear the LCD screen
+    LCD lcd = LCD(); // Clear the LCD screen
+    lcd.printStr("Je moder", 1, 0);
 }
