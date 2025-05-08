@@ -3,10 +3,17 @@ extern "C"
 #include <stdio.h>
 #include "driver/i2c.h"
 #include "LCD.h"
+#include "Stepmotor.h"
 }
 
 extern "C" void app_main(void)
 {
     LCD lcd = LCD(); // Clear the LCD screen
-    lcd.printStr("Je moder", 1, 0);
+    //lcd.printStr("Je moder", 1, 0);
+    Stepmotor motor = Stepmotor();
+    motor.moveStepMotor(motor.getCurrentAnalog(50));
+    int stuff = motor.getCurrentAnalog(50);
+    char ch[5];
+    sprintf(ch, "%d", stuff);
+    lcd.printStr(ch, 1, 9);
 }
