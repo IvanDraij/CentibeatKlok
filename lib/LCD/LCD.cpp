@@ -6,7 +6,7 @@ LCD::LCD()
     lcd_init();
     lcd_clear();
 }
-void printStr(char *str, uint8_t row, uint8_t col)
+void LCD::printStr(char *str, uint8_t row, uint8_t col)
 {
     lcd_put_cursor(row, col); //set cursor on chosen point
     lcd_send_string(str); //set text on screen
@@ -30,5 +30,3 @@ void LCD::sendComannd(uint8_t cmd)
 // zoals het verbinden 
 //het synchroniseren
 // verwisselen van modus
-
-
