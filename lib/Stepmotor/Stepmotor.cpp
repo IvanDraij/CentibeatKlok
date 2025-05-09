@@ -10,9 +10,9 @@
 #define IN3 GPIO_NUM_17
 #define IN4 GPIO_NUM_16
 
-// 3.6 graden (1/100e van 360) dus 1 centibeat
-#define STEPS_PER_ROTATION 5.12
+#define STEPS_PER_CENTIBEAT 5.12 // Full 360 of the clock takes 512 steps, A full 360 is a beat, to get 1 centibeat: 512/100 = 5.12
 #define STEP_DELAY_MS 10
+#define AMOUNT_OF_COILS 4
 
 Stepmotor ::Stepmotor()
 {
@@ -36,18 +36,23 @@ uint8_t step_sequence_backward[4][4] = {
 
 uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
 {
-  // Bereken de nieuwe stand waar de stappenmotor op moet komen te staan
+  // This function determines howmany steps must be taken to reach the wanted position
+  // The function does this by calculating it with the total amount of centibeats
+
+  // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
   uint32_t newAnalogRaw = centibeat % 100;
 
-  // Haal de oude stand van de nieuwe stand af om te bepalen hoeveel stappen de motor moet maken.
+  // To determine howmany steps must be taken, subtract the last value from the current value.
   int32_t numberOfSteps = newAnalogRaw - lastAnalog;
 
-  // Zet de laatst gemeten analoge stand gelijk aan de raw output van de modulo, dat is de stand waar de klok heen loopt
+  // Put the new raw value into the last logged value.
   lastAnalog = newAnalogRaw;
 
+  // If numberOfSteps is smaller than 0, that means the previous amount of centibeat > current amount. Substract the negative number from 100.
+  // To get the right amount of steps
   if (numberOfSteps < 0)
   {
-    numberOfSteps = numberOfSteps * -1;
+    numberOfSteps = 100 - numberOfSteps;
   }
 
   return numberOfSteps;
@@ -55,24 +60,25 @@ uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
 
 void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t Mode)
 {
+  // Function for turning the motors, can both be counterclockwise and clockwise, the Enum will be used to determining the direction.
+
   uint8_t (*step_sequence)[4];
-  // Bepaling of de motor links of rechtsom moet draaien
+  // Determine whether the motor turns clockwise or not
   if (Mode == Forward)
   {
-    // Motor rechtsom
+    // Motor clockwise
     step_sequence = step_sequence_forward;
   }
-  else // Dit wordt gebruikt bij de rotary encoder als deze linksom draait
+  else // This will be used when the clock needs to turn counterclockwise (for rotary encoder)
   {
-    // Motor linksom
+    // Motor counterclockwise
     step_sequence = step_sequence_backward;
-    // Haal de hoeveelheid stappen van 100 af om de juiste hoeveelheid stappen te krijgen
-    numberOfSteps = 100 - numberOfSteps;
   }
 
-  for (int i = 0; i < (float)(STEPS_PER_ROTATION * numberOfSteps); i++)
+  // Turning the motors
+  for (int i = 0; i < (float)(STEPS_PER_CENTIBEAT * numberOfSteps); i++)
   {
-    for (int j = 0; j < 4; j++)
+    for (int j = 0; j < AMOUNT_OF_COILS; j++)
     {
       gpio_set_level(IN1, step_sequence[j][0]);
       gpio_set_level(IN2, step_sequence[j][1]);
@@ -85,7 +91,7 @@ void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t Mode)
 
 void Stepmotor ::initStepmotor()
 {
-  // Initialisation of gpio pins used for the stepmotor
+  // Initialisatie van de pins gebruikt door de stappenmotor
   gpio_config_t io_conf =
       {
           .pin_bit_mask = (1ULL << IN1) | (1ULL << IN2) | (1ULL << IN3) | (1ULL << IN4),
