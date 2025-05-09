@@ -22,7 +22,7 @@ class LCD
 {
     public:
         LCD(); //constructor
-        void printStr(char *str, uint8_t row, uint8_t col); 
+        void printStr(char str[], uint8_t row, uint8_t col); 
         void sendComannd(uint8_t cmd);
     protected:
 
