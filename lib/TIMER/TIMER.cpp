@@ -1,13 +1,13 @@
 #include "TIMER.h"
 #define amountOfmsForOneCentibeat   864000
-#define hunderBeats                 10000
+#define hunderdBeats                 10000
 
 extern uint16_t count;
 
 void centibeat_timer_callback(void *param) // task to count the centibeats (not an interrupt)
 {
     count++;
-    if (count == hunderBeats) // 10000 centibeats
+    if (count == hunderdBeats) // 10000 centibeats
     {
         //NTP CODE
     }
