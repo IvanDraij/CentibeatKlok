@@ -20,14 +20,14 @@ Stepmotor ::Stepmotor()
   lastAnalog = 0;
 }
 
-uint8_t step_sequence_forward[4][4] = {
+uint8_t step_sequence_forward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
     {1, 1, 0, 0},
     {0, 1, 1, 0},
     {0, 0, 1, 1},
     {1, 0, 0, 1},
 };
 
-uint8_t step_sequence_backward[4][4] = {
+uint8_t step_sequence_backward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
     {0, 0, 1, 1},
     {0, 1, 1, 0},
     {1, 1, 0, 0},
@@ -62,7 +62,7 @@ void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t Mode)
 {
   // Function for turning the motors, can both be counterclockwise and clockwise, the Enum will be used to determining the direction.
 
-  uint8_t (*step_sequence)[4];
+  uint8_t (*step_sequence)[AMOUNT_OF_COILS];
   // Determine whether the motor turns clockwise or not
   if (Mode == Forward)
   {
