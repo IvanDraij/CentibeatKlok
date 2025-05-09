@@ -12,6 +12,7 @@ extern "C" void app_main(void)
 {
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
+    lcd.printStr("Je moder", 1, 0);
 
     while(true)
     {
