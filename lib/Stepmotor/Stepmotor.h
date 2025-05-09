@@ -10,7 +10,11 @@ public:
     Stepmotor();
     uint32_t getCurrentAnalog(uint32_t);
     void initStepmotor();
-    void moveStepMotor(uint8_t);
+    void moveStepMotor(uint8_t, uint8_t);
     uint32_t lastAnalog;
+    enum Mode {
+        Forward,
+        Backward
+    };
 };
 #endif

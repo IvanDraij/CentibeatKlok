@@ -11,10 +11,8 @@
 #define IN4 GPIO_NUM_16
 
 // 3.6 graden (1/100e van 360) dus 1 centibeat
-#define STEPS_PER_REV 5.12
+#define STEPS_PER_ROTATION 5.12
 #define STEP_DELAY_MS 10
-
-
 
 Stepmotor ::Stepmotor()
 {
@@ -38,16 +36,11 @@ uint8_t step_sequence_backward[4][4] = {
 
 uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
 {
-  LCD lcd = LCD();
   // Bereken de nieuwe stand waar de stappenmotor op moet komen te staan
   uint32_t newAnalogRaw = centibeat % 100;
 
   // Haal de oude stand van de nieuwe stand af om te bepalen hoeveel stappen de motor moet maken.
   int32_t numberOfSteps = newAnalogRaw - lastAnalog;
-  int newstuff = numberOfSteps;
-  char car[5];
-  sprintf(car, "%d", newstuff);
-  lcd.printStr(car, 1, 0);
 
   // Zet de laatst gemeten analoge stand gelijk aan de raw output van de modulo, dat is de stand waar de klok heen loopt
   lastAnalog = newAnalogRaw;
@@ -60,25 +53,24 @@ uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
   return numberOfSteps;
 }
 
-void Stepmotor ::moveStepMotor(uint8_t numberOfSteps)
+void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t Mode)
 {
   uint8_t (*step_sequence)[4];
-  // If statement om te bepalen welke kant het meest efficient is om heen te draaien
-  if (numberOfSteps < 51)
+  // Bepaling of de motor links of rechtsom moet draaien
+  if (Mode == Forward)
   {
     // Motor rechtsom
     step_sequence = step_sequence_forward;
   }
-  else
+  else // Dit wordt gebruikt bij de rotary encoder als deze linksom draait
   {
     // Motor linksom
     step_sequence = step_sequence_backward;
-
-    // Haal de hoeveelheid stappen van 100 af om de juiste positie te krijgen
+    // Haal de hoeveelheid stappen van 100 af om de juiste hoeveelheid stappen te krijgen
     numberOfSteps = 100 - numberOfSteps;
   }
 
-  for (int i = 0; i < (float)(STEPS_PER_REV * numberOfSteps); i++)
+  for (int i = 0; i < (float)(STEPS_PER_ROTATION * numberOfSteps); i++)
   {
     for (int j = 0; j < 4; j++)
     {
