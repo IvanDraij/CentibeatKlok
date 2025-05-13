@@ -34,16 +34,16 @@ uint8_t step_sequence_backward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
     {1, 0, 0, 1},
 };
 
-uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
+uint8_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
 {
   // This function determines howmany steps must be taken to reach the wanted position
   // The function does this by calculating it with the total amount of centibeats
 
   // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
-  uint32_t newAnalogRaw = centibeat % 100;
+  uint8_t newAnalogRaw = centibeat % 100;
 
   // To determine howmany steps must be taken, subtract the last value from the current value.
-  int32_t numberOfSteps = newAnalogRaw - lastAnalog;
+  int8_t numberOfSteps = newAnalogRaw - lastAnalog;
 
   // Put the new raw value into the last logged value.
   lastAnalog = newAnalogRaw;
@@ -52,7 +52,7 @@ uint32_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
   // To get the right amount of steps
   if (numberOfSteps < 0)
   {
-    numberOfSteps = 100 - numberOfSteps;
+    numberOfSteps = 100 + numberOfSteps;
   }
 
   return numberOfSteps;
