@@ -9,8 +9,7 @@ extern "C"
 extern "C" void app_main(void)
 {
     LCD lcd = LCD(); // Clear the LCD screen
-    lcd.printStr("Je moder", 1, 0);
-    iotroam_init("iotroam", "N4B4RiiNFg");
+    iotroam_init("EspTestNetwork", "TestTest");
     iotroam_connect();
     vTaskDelay(pdMS_TO_TICKS(1000));
     //iotroam_disconnect();
