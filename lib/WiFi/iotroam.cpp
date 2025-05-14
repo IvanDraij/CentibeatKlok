@@ -30,8 +30,8 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (s_retry_num < MAX_FAILURES) {
-            lcd_put_cursor(0,0);
-            lcd_send_string("Reconnecting    ");
+            //lcd_put_cursor(0,0);
+            //lcd_send_string("Reconnecting    ");
             esp_wifi_connect();
             s_retry_num++;
         } else {
@@ -46,6 +46,10 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
+        lcd_put_cursor(1,0);
+        char ip_str[16];  // Enough to hold "xxx.xxx.xxx.xxx" + null terminator
+        sprintf(ip_str, IPSTR, IP2STR(&event->ip_info.ip));
+        lcd_send_string(ip_str);
         xEventGroupSetBits(wifi_event_group, WIFI_SUCCESS);
     }
 }
@@ -113,7 +117,7 @@ void iotroam_disconnect() {
     lcd_put_cursor(0,0);
     lcd_send_string("Disconnecting     ");
     esp_wifi_disconnect();
-    
+
 
     return;
 }
