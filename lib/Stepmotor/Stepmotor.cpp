@@ -1,18 +1,4 @@
 #include "Stepmotor.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "LCD.h"
-
-// Define GPIO pins for ULN2003
-#define IN1 GPIO_NUM_19
-#define IN2 GPIO_NUM_18
-#define IN3 GPIO_NUM_17
-#define IN4 GPIO_NUM_16
-
-#define STEPS_PER_CENTIBEAT 5.12 // Full 360 of the clock takes 512 steps, A full 360 is a beat, to get 1 centibeat: 512/100 = 5.12
-#define STEP_DELAY_MS 10
-#define AMOUNT_OF_COILS 4
 
 Stepmotor ::Stepmotor()
 {
@@ -34,7 +20,7 @@ uint8_t step_sequence_backward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
     {1, 0, 0, 1},
 };
 
-uint8_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
+uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 {
   // This function determines howmany steps must be taken to reach the wanted position
   // The function does this by calculating it with the total amount of centibeats
@@ -58,13 +44,13 @@ uint8_t Stepmotor ::getCurrentAnalog(uint32_t centibeat)
   return numberOfSteps;
 }
 
-void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t Mode)
+void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 {
   // Function for turning the motors, can both be counterclockwise and clockwise, the Enum will be used to determining the direction.
 
   uint8_t (*step_sequence)[AMOUNT_OF_COILS];
   // Determine whether the motor turns clockwise or not
-  if (Mode == Forward)
+  if (motorRotation == Forward)
   {
     // Motor clockwise
     step_sequence = step_sequence_forward;
@@ -100,4 +86,9 @@ void Stepmotor ::initStepmotor()
           .pull_down_en = GPIO_PULLDOWN_DISABLE,
           .intr_type = GPIO_INTR_DISABLE};
   gpio_config(&io_conf);
+}
+
+void Stepmotor ::moveStepMotorToCentibeat(uint32_t centibeat)
+{
+  moveStepMotor(calculateSteps(centibeat), Forward);
 }
