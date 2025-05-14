@@ -11,5 +11,5 @@ extern "C" void app_main(void)
     LCD lcd = LCD(); // Clear the LCD screen
     lcd.printStr("Je moder", 1, 0);
     Stepmotor motor = Stepmotor();
-    motor.moveStepMotorToCentibeat(99);
+    motor.moveStepMotorToCentibeat(30);
 }

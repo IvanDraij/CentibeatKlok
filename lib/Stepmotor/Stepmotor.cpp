@@ -3,7 +3,6 @@
 Stepmotor ::Stepmotor()
 {
   initStepmotor();
-  lastAnalog = 0;
 }
 
 uint8_t step_sequence_forward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
@@ -29,10 +28,10 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
   uint8_t newClockPosVal = centibeat % maxSteps;
 
   // To determine howmany steps must be taken, subtract the last value from the current value.
-  int8_t numberOfSteps = newClockPosVal - lastAnalog;
+  int8_t numberOfSteps = newClockPosVal - previousClockPosVal;
 
   // Put the new raw value into the last logged value.
-  lastAnalog = newClockPosVal;
+  previousClockPosVal = newClockPosVal;
 
   // If numberOfSteps is smaller than 0, that means the previous amount of centibeat > current amount. Substract the negative number from 100.
   // To get the right amount of steps

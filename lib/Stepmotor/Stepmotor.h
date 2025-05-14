@@ -27,10 +27,11 @@ private:
         Forward,
         Backward
     };
+    uint8_t previousClockPosVal = 0;
+
 
 public:
     Stepmotor();
-    uint32_t lastAnalog;
     void moveStepMotorToCentibeat(uint32_t);
 };
 #endif
