@@ -4,6 +4,7 @@ extern "C" {
 #include "freertos/FreeRTOS.h"
 #include "TIMER.h"
 #include "LCD.h"
+#include "Stepmotor.h"
 }
 
 uint16_t count = 0;
@@ -13,6 +14,8 @@ extern "C" void app_main(void)
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     lcd.printStr("Je moder", 1, 0);
+    Stepmotor motor = Stepmotor();
+    motor.moveStepMotorToCentibeat(30);
 
     while(true)
     {
