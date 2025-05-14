@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-#include "LCD.h"
+//#include "LCD.h"
 
 // Define GPIO pins for ULN2003
 #define IN1 GPIO_NUM_19
