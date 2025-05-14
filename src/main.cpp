@@ -5,7 +5,6 @@ extern "C" {
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
-
 }
 #include "iotroam.h"
 
@@ -19,7 +18,7 @@ extern "C" void app_main(void)
     Stepmotor motor = Stepmotor();
     //motor.moveStepMotorToCentibeat(30);
     
-    iotroam_init("EspTestNetwork", "TestTest");
+    iotroam_init("iotroam", "N4B4RiiNFg");
     iotroam_connect();
     //vTaskDelay(pdMS_TO_TICKS(1000));
     //iotroam_disconnect();
