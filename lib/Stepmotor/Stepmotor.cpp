@@ -26,19 +26,19 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
   // The function does this by calculating it with the total amount of centibeats
 
   // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
-  uint8_t newAnalogRaw = centibeat % 100;
+  uint8_t newClockPosVal = centibeat % maxSteps;
 
   // To determine howmany steps must be taken, subtract the last value from the current value.
-  int8_t numberOfSteps = newAnalogRaw - lastAnalog;
+  int8_t numberOfSteps = newClockPosVal - lastAnalog;
 
   // Put the new raw value into the last logged value.
-  lastAnalog = newAnalogRaw;
+  lastAnalog = newClockPosVal;
 
   // If numberOfSteps is smaller than 0, that means the previous amount of centibeat > current amount. Substract the negative number from 100.
   // To get the right amount of steps
   if (numberOfSteps < 0)
   {
-    numberOfSteps = 100 + numberOfSteps;
+    numberOfSteps = maxSteps + numberOfSteps;
   }
 
   return numberOfSteps;
