@@ -8,7 +8,7 @@ extern "C" {
 }
 #include "iotroam.h"
 
-uint16_t count = 0;
+uint16_t centibeatCount = 0;
 
 extern "C" void app_main(void)
 {
@@ -27,9 +27,9 @@ extern "C" void app_main(void)
     while(true)
     {
         char ch[8];
-        sprintf(ch, "%d", count);
+        sprintf(ch, "%d", centibeatCount);
         lcd.printStr(ch, 0,12);
-        motor.moveStepMotorToCentibeat(count);
+        motor.moveStepMotorToCentibeat(centibeatCount);
         vTaskDelay(10/ portTICK_PERIOD_MS);
     }
 }

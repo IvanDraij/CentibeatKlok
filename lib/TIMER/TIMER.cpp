@@ -2,12 +2,12 @@
 #define amountOfmsForOneCentibeat   864000
 #define hunderdBeats                 10000
 
-extern uint16_t count;
+extern uint32_t centibeatCount;
 
-void centibeat_timer_callback(void *param) // task to count the centibeats (not an interrupt)
+void centibeat_timer_callback(void *param) // task to centibeatCount the centibeats (not an interrupt)
 {
-    count++;
-    if (count == hunderdBeats) // 10000 centibeats
+    centibeatCount++;
+    if (centibeatCount == hunderdBeats) // 10000 centibeats
     {
         //NTP CODE
     }
