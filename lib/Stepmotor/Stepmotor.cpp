@@ -5,19 +5,30 @@ Stepmotor ::Stepmotor()
   initStepmotor();
 }
 
-uint8_t step_sequence_forward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
+uint8_t step_sequence_forward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
     {1, 1, 0, 0},
+    {0, 1, 0, 0},
     {0, 1, 1, 0},
+    {0, 0, 1, 0},
     {0, 0, 1, 1},
+    {0, 0, 0, 1},
     {1, 0, 0, 1},
+    {1, 0, 0, 0},
 };
 
-uint8_t step_sequence_backward[AMOUNT_OF_COILS][AMOUNT_OF_COILS] = {
+uint8_t step_sequence_backward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
     {0, 0, 1, 1},
+    {0, 0, 1, 0},
     {0, 1, 1, 0},
+    {0, 1, 0, 0},
     {1, 1, 0, 0},
+    {1, 0, 0, 0},
     {1, 0, 0, 1},
+    {0, 0, 0, 1},
 };
+
+uint32_t totalStepsTakenInADay = 0;
+uint8_t rotationPerCentibeat;
 
 uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 {
@@ -25,7 +36,7 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
   // The function does this by calculating it with the total amount of centibeats
 
   // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
-  uint8_t newClockPosVal = centibeat % maxSteps;
+  uint8_t newClockPosVal = centibeat % MAXSTEPS;
 
   // To determine howmany steps must be taken, subtract the last value from the current value.
   int8_t numberOfSteps = newClockPosVal - previousClockPosVal;
@@ -37,46 +48,60 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
   // To get the right amount of steps
   if (numberOfSteps < 0)
   {
-    numberOfSteps = maxSteps + numberOfSteps;
+    numberOfSteps = MAXSTEPS + numberOfSteps;
   }
 
   return numberOfSteps;
 }
 
-void Stepmotor ::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
+void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 {
-  // Function for turning the motors, can both be counterclockwise and clockwise, the Enum will be used to determining the direction.
-
-  uint8_t (*step_sequence)[AMOUNT_OF_COILS];
-  // Determine whether the motor turns clockwise or not
+  uint8_t (*step_sequence)[AMOUNT_OF_COILS]; // Change the sequence array to the desired rotation
   if (motorRotation == Forward)
   {
-    // Motor clockwise
     step_sequence = step_sequence_forward;
   }
-  else // This will be used when the clock needs to turn counterclockwise (for rotary encoder)
+  else
   {
-    // Motor counterclockwise
     step_sequence = step_sequence_backward;
   }
 
-  // Turning the motors
-  for (int i = 0; i < (float)(STEPS_PER_CENTIBEAT * numberOfSteps); i++)
+  static int sequenceIndex = 0; // Index to keep track of what the last step in the sequence was
+
+  for (int step = 0; step < numberOfSteps; step++) // Loop to go through the total amount of steps needed
   {
-    for (int j = 0; j < AMOUNT_OF_COILS; j++)
+    totalStepsTakenInADay++;
+    if (totalStepsTakenInADay != 0 && ((totalStepsTakenInADay % MAXSTEPS) % MODULO25 == 0)) // Using modulo 25 to deteremine if the amount of steps is dividable by 25
     {
-      gpio_set_level(IN1, step_sequence[j][0]);
-      gpio_set_level(IN2, step_sequence[j][1]);
-      gpio_set_level(IN3, step_sequence[j][2]);
-      gpio_set_level(IN4, step_sequence[j][3]);
+      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - STEPREDUCTION); // If it's step 25, remove 8 steps to keep the motor running accurately
+    }
+    else
+    {
+      rotationPerCentibeat = AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT;
+    }
+
+    if (totalStepsTakenInADay == ONEDAY) // When the stepcounter reaches 100000, reset it to 0
+    {
+      totalStepsTakenInADay = 0;
+    }
+
+    for (int i = 0; i < rotationPerCentibeat; i++) // Loop to take 1 inner step within the stepmotor
+    {
+      gpio_set_level(IN1, step_sequence[sequenceIndex][0]);
+      gpio_set_level(IN2, step_sequence[sequenceIndex][1]);
+      gpio_set_level(IN3, step_sequence[sequenceIndex][2]);
+      gpio_set_level(IN4, step_sequence[sequenceIndex][3]);
+
       vTaskDelay(pdMS_TO_TICKS(STEP_DELAY_MS));
+
+      sequenceIndex = (sequenceIndex + 1) % AMOUNT_OF_STEPS; // Adding 1 to the sequence, doing modulo 8 to keep the value beneath 8 at all times
     }
   }
 }
 
 void Stepmotor ::initStepmotor()
 {
-  // Initialisatie van de pins gebruikt door de stappenmotor
+  // Initialisation of the pins used by the stepmotor
   gpio_config_t io_conf =
       {
           .pin_bit_mask = (1ULL << IN1) | (1ULL << IN2) | (1ULL << IN3) | (1ULL << IN4),

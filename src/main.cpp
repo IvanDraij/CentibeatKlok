@@ -1,4 +1,5 @@
-extern "C" {
+extern "C"
+{
 #include <stdio.h>
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
@@ -14,22 +15,22 @@ extern "C" void app_main(void)
 {
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
-    lcd.printStr("Je moder", 1, 0);
+    // lcd.printStr("Je moder", 1, 0);
     Stepmotor motor = Stepmotor();
-    //motor.moveStepMotorToCentibeat(30);
-    
-    iotroam_init("iotroam", "N4B4RiiNFg");
-    iotroam_connect();
-    //vTaskDelay(pdMS_TO_TICKS(1000));
-    //iotroam_disconnect();
-    //vTaskDelay(pdMS_TO_TICKS(1000));
+    // motor.moveStepMotorToCentibeat(25);
 
-    while(true)
+    // iotroam_init("iotroam", "N4B4RiiNFg");
+    // iotroam_connect();
+
+    while (true)
     {
         char ch[8];
         sprintf(ch, "%d", centibeatCount);
-        lcd.printStr(ch, 0,12);
+        lcd.printStr(ch, 0, 12);
         motor.moveStepMotorToCentibeat(centibeatCount);
-        vTaskDelay(10/ portTICK_PERIOD_MS);
+        char steps[8];
+        sprintf(steps, "%d", motor.rotationPerCentibeat);
+        lcd.printStr(steps, 1, 12);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
