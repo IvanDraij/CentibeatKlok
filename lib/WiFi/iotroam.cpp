@@ -117,11 +117,3 @@ void iotroam_connect() {
         lcd_send_string("Failed     ");
     }
 }
-
-// Attempts to disconnect from current Wi-Fi network
-void iotroam_disconnect() { //Does not work
-    lcd_put_cursor(0,0);
-    lcd_send_string("Disconnecting     ");
-
-    esp_wifi_disconnect();  // Disconnects from Wi-Fi
-}
