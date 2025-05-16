@@ -10,7 +10,8 @@ static char saved_password[64];              // Stores the password
 
 // Wi-Fi event handler: handles connect/disconnect logic
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                               int32_t event_id, void* event_data) {
+                               int32_t event_id, void* event_data) 
+{
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         // When station starts, attempt to connect
         lcd_put_cursor(0,0);
@@ -30,7 +31,8 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 
 // IP event handler: called when ESP gets IP from the router
 static void ip_event_handler(void* arg, esp_event_base_t event_base,
-                             int32_t event_id, void* event_data) {
+                             int32_t event_id, void* event_data) 
+{
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) { 
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
 
@@ -60,7 +62,8 @@ void iotroam_init(const char *ssid, const char *password) {
 
     // Initialize NVS (non-volatile storage)
     esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) 
+    {
         // If NVS is corrupted/full, erase and retry
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();   
@@ -82,7 +85,8 @@ void iotroam_init(const char *ssid, const char *password) {
 }
 
 // Starts connection attempt using previously initialized credentials
-void iotroam_connect() {
+void iotroam_connect() 
+{
     wifi_event_group = xEventGroupCreate();  // Create event group for connection result
 
     wifi_config_t wifi_config = { 0 };
