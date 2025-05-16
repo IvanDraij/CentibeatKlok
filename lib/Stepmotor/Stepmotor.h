@@ -11,14 +11,16 @@
 #define IN3 GPIO_NUM_17
 #define IN4 GPIO_NUM_16
 
-#define STEPS_PER_CENTIBEAT 5.12 // Full 360 of the clock takes 512 steps, A full 360 is a beat, to get 1 centibeat: 512/100 = 5.12
 #define STEP_DELAY_MS 10
-#define AMOUNT_OF_COILS 4
-#define maxSteps 100
+#define AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT 41
+#define AMOUNT_OF_STEPS 8 //For half step mode
+#define AMOUNT_OF_COILS 4 //Amount of coils in ROHS 28BYJ48
+#define MAXSTEPS 100 //Max amount of steps for the stepmotor to take + 1.
 
 class Stepmotor
 {
 private:
+    static int sequenceIndex;
     uint8_t calculateSteps(uint32_t);
     void initStepmotor();
     void moveStepMotor(uint8_t, uint8_t);
