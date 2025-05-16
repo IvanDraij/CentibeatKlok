@@ -12,7 +12,7 @@
 #define IN4 GPIO_NUM_16
 
 #define STEP_DELAY_MS 10
-//360 degrees is 512 steps, 1 centibeat = 512/100 = 5,12 steps. Motor is on half step so there's an accuracy of 1/8 = 0,125. 5,12/0,125 = 40,96. Rounded up it's 41.
+//360 degrees is 4096 steps, 1 centibeat is 100th of 360 degrees. 4096/100 = 40.96. Rounded it's 41.
 #define AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT 41
 #define AMOUNT_OF_STEPS 8 //For half step mode
 #define AMOUNT_OF_COILS 4 //Amount of coils in ROHS 28BYJ48
