@@ -28,6 +28,7 @@ uint8_t step_sequence_backward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
 };
 
 uint32_t totalStepsTakenInADay = 0;
+uint8_t rotationPerCentibeat;
 
 uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 {
@@ -55,7 +56,6 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 
 void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 {
-  uint8_t rotationPerCentibeat;
   uint8_t (*step_sequence)[AMOUNT_OF_COILS]; // Change the sequence array to the desired rotation
   if (motorRotation == Forward)
   {
@@ -73,7 +73,7 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
     totalStepsTakenInADay++;
     if (totalStepsTakenInADay != 0 && ((totalStepsTakenInADay % MAXSTEPS) % MODULO25 == 0)) // Using modulo 25 to deteremine if the amount of steps is dividable by 25
     {
-      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - 8); //If it's step 25, remove 8 steps to keep the motor running accurately
+      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - 8); // If it's step 25, remove 8 steps to keep the motor running accurately
     }
     else
     {

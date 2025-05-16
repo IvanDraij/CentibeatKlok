@@ -28,6 +28,9 @@ extern "C" void app_main(void)
         sprintf(ch, "%d", centibeatCount);
         lcd.printStr(ch, 0, 12);
         motor.moveStepMotorToCentibeat(centibeatCount);
+        char steps[8];
+        sprintf(steps, "%d", motor.rotationPerCentibeat);
+        lcd.printStr(steps, 1, 12);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }

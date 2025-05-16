@@ -38,5 +38,6 @@ private:
 public:
     Stepmotor();
     void moveStepMotorToCentibeat(uint32_t);
+    uint8_t rotationPerCentibeat;
 };
 #endif
