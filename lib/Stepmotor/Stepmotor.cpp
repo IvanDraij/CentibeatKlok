@@ -16,7 +16,7 @@ uint8_t step_sequence_forward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
     {1, 0, 0, 0},
 };
 
-uint8_t step_sequence_backward[AMOUNT_OF_STEPS][4] = {
+uint8_t step_sequence_backward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
     {0, 0, 1, 1},
     {0, 0, 1, 0},
     {0, 1, 1, 0},
@@ -26,6 +26,8 @@ uint8_t step_sequence_backward[AMOUNT_OF_STEPS][4] = {
     {1, 0, 0, 1},
     {0, 0, 0, 1},
 };
+
+uint32_t totalStepsTakenInADay = 0;
 
 uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 {
@@ -53,7 +55,8 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 
 void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 {
-  uint8_t (*step_sequence)[AMOUNT_OF_COILS]; //Change the sequence array to the desired rotation
+  uint8_t rotationPerCentibeat;
+  uint8_t (*step_sequence)[AMOUNT_OF_COILS]; // Change the sequence array to the desired rotation
   if (motorRotation == Forward)
   {
     step_sequence = step_sequence_forward;
@@ -63,11 +66,20 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
     step_sequence = step_sequence_backward;
   }
 
-  static int sequenceIndex = 0; //Index to keep track of what the last step in the sequence was
+  static int sequenceIndex = 0; // Index to keep track of what the last step in the sequence was
 
-  for (int step = 0; step < numberOfSteps; step++) //Loop to go through the total amount of steps needed
+  for (int step = 0; step < numberOfSteps; step++) // Loop to go through the total amount of steps needed
   {
-    for (int i = 0; i < AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT; i++) //Loop to take 1 inner step within the stepmotor
+    totalStepsTakenInADay++;
+    if (totalStepsTakenInADay != 0 && ((totalStepsTakenInADay % MAXSTEPS) % MODULO25 == 0)) // Using modulo 25 to deteremine if the amount of steps is dividable by 25
+    {
+      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - 8); //If it's step 25, remove 8 steps to keep the motor running accurately
+    }
+    else
+    {
+      rotationPerCentibeat = AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT;
+    }
+    for (int i = 0; i < rotationPerCentibeat; i++) // Loop to take 1 inner step within the stepmotor
     {
       gpio_set_level(IN1, step_sequence[sequenceIndex][0]);
       gpio_set_level(IN2, step_sequence[sequenceIndex][1]);
@@ -76,7 +88,7 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 
       vTaskDelay(pdMS_TO_TICKS(STEP_DELAY_MS));
 
-      sequenceIndex = (sequenceIndex + 1) % AMOUNT_OF_STEPS;  //Adding 1 to the sequence, doing modulo 8 to keep the value beneath 8 at all times
+      sequenceIndex = (sequenceIndex + 1) % AMOUNT_OF_STEPS; // Adding 1 to the sequence, doing modulo 8 to keep the value beneath 8 at all times
     }
   }
 }
