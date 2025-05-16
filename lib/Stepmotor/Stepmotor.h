@@ -19,6 +19,7 @@
 #define MAXSTEPS 100 //Max amount of steps for the stepmotor to take + 1.
 #define MODULO25 25
 #define STEPREDUCTION 8 //Since 41 is rounded up by 0.04. Each 25 steps, 1 step (8 inner steps) need to be reducted so the clock is accurate. Since 25*0.04 = 1.
+#define ONEDAY 100000
 
 class Stepmotor
 {
@@ -39,6 +40,6 @@ private:
 public:
     Stepmotor();
     void moveStepMotorToCentibeat(uint32_t);
-    uint8_t rotationPerCentibeat;
+    uint8_t rotationPerCentibeat; //Putting the variable on global to test
 };
 #endif

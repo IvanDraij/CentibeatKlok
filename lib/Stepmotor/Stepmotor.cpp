@@ -79,6 +79,12 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
     {
       rotationPerCentibeat = AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT;
     }
+
+    if (totalStepsTakenInADay == ONEDAY) // When the stepcounter reaches 100000, reset it to 0
+    {
+      totalStepsTakenInADay = 0;
+    }
+
     for (int i = 0; i < rotationPerCentibeat; i++) // Loop to take 1 inner step within the stepmotor
     {
       gpio_set_level(IN1, step_sequence[sequenceIndex][0]);
