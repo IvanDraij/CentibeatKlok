@@ -73,7 +73,7 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
     totalStepsTakenInADay++;
     if (totalStepsTakenInADay != 0 && ((totalStepsTakenInADay % MAXSTEPS) % MODULO25 == 0)) // Using modulo 25 to deteremine if the amount of steps is dividable by 25
     {
-      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - 8); // If it's step 25, remove 8 steps to keep the motor running accurately
+      rotationPerCentibeat = (AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - STEPREDUCTION); // If it's step 25, remove 8 steps to keep the motor running accurately
     }
     else
     {

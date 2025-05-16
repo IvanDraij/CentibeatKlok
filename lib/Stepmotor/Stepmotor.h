@@ -18,6 +18,7 @@
 #define AMOUNT_OF_COILS 4 //Amount of coils in ROHS 28BYJ48
 #define MAXSTEPS 100 //Max amount of steps for the stepmotor to take + 1.
 #define MODULO25 25
+#define STEPREDUCTION 8 //Since 41 is rounded up by 0.04. Each 25 steps, 1 step (8 inner steps) need to be reducted so the clock is accurate. Since 25*0.04 = 1.
 
 class Stepmotor
 {
