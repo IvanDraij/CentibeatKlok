@@ -19,18 +19,14 @@ extern "C" void app_main(void)
     Stepmotor motor = Stepmotor();
     // motor.moveStepMotorToCentibeat(25);
 
-    // iotroam_init("iotroam", "N4B4RiiNFg");
-    // iotroam_connect();
+    iotroam_init("iotroam", "N4B4RiiNFg");
+    iotroam_connect();
+
+    WIFI wifi = WIFI();
 
     while (true)
     {
-        char ch[8];
-        sprintf(ch, "%d", centibeatCount);
-        lcd.printStr(ch, 0, 12);
-        motor.moveStepMotorToCentibeat(centibeatCount);
-        char steps[8];
-        sprintf(steps, "%d", motor.rotationPerCentibeat);
-        lcd.printStr(steps, 1, 12);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        motor.moveStepMotorToCentibeat(wifi.printTime());
+        vTaskDelay(200);
     }
 }
