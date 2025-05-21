@@ -152,7 +152,7 @@ uint32_t WIFI ::getTime()
 {
     time_t now;
     struct tm timeinfo = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // Putting the whole struct on 0 to counteract warnings
-    int retry = 0;
+    uint8_t retry = 0;
 
     // Comparing tm_year to 2025-1900 since tm_year starts counting the years since 1900
     while ((timeinfo.tm_year < CURRENTYEAR) && (retry < MAX_FAILURES)) // Trying to fetch time for 10 times
@@ -171,16 +171,15 @@ uint32_t WIFI ::getTime()
     }
 
     // Calculate seconds since midnight
-    int seconds_since_midnight = timeinfo.tm_hour * SECONDS_IN_HOUR +
-                                 timeinfo.tm_min * SECONDS_IN_MINUTE +
-                                 timeinfo.tm_sec;
+    uint32_t seconds_since_midnight = timeinfo.tm_hour * SECONDS_IN_HOUR +
+                                      timeinfo.tm_min * SECONDS_IN_MINUTE +
+                                      timeinfo.tm_sec;
 
-    // Convert to centibeats (1 centibeat = 0.864 seconds)
-    double centibeats = seconds_since_midnight / CENTIBEAT_MULTIPLIER;
+    // Convert to centibeats (1 centibeat = 0.864 seconds) and rounding so the function doesnt return a double.
+    double centibeats = round(seconds_since_midnight / CENTIBEAT_MULTIPLIER);
 
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);    // Adding info to a printable string
-    ESP_LOGI(SNTP, "Current time: %s", strftime_buf);                 // Logging current time
-    ESP_LOGI(SNTP, "Current time in centibeats: %05.0f", centibeats); // Logging current centibeats
-
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);  // Adding info to a printable string
+    ESP_LOGI(SNTP, "Current time: %s", strftime_buf);               // Logging current time
+    ESP_LOGI(SNTP, "Current time in centibeats: %.0f", centibeats); // Logging current centibeats
     return centibeats;
 }
