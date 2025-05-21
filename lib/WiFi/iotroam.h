@@ -11,15 +11,10 @@
 #include "nvs_flash.h"
 #include <string.h>
 #include "LCD.h"
-extern "C"
-{
 #include <time.h>
 #include <sys/time.h>
-#include "esp_log.h"
 #include "esp_sntp.h"
-#include <inttypes.h>
 #include <math.h>
-}
 
 // Event group bits for Wi-Fi connection status
 #define WIFI_SUCCESS 1 << 0
