@@ -25,6 +25,12 @@ extern "C"
 #define WIFI_SUCCESS 1 << 0
 #define WIFI_FAILURE 1 << 1
 #define MAX_FAILURES 10 // Max number of reconnect attempts before giving up
+#define CURRENTYEAR (2025 - 1900)
+#define TWOSECONDS (pdMS_TO_TICKS(2000))
+#define CEST_CORRECTION 2
+#define CENTIBEAT_MULTIPLIER 0.864
+#define SECONDS_IN_HOUR 3600
+#define SECONDS_IN_MINUTE
 
 void iotroam_init(const char *ssid, const char *password);
 void iotroam_connect();
@@ -33,13 +39,12 @@ void iotroam_disconnect();
 class WIFI
 {
 private:
-  void initNTP();
-  const char *TAG = "NTP";
+  void initSNTP();
   char strftime_buf[64];
 
 public:
   WIFI();
-  uint32_t printTime();
+  uint32_t getTime();
 };
 
 #endif // IOTROAM_H

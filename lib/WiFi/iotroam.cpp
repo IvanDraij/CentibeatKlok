@@ -1,6 +1,7 @@
 #include "iotroam.h"
 
 static const char *TAG = "iotroam"; // Tag for ESP logging
+const char *SNTP = "SNTP";          // Tag for SNTP logging
 
 // Global variables
 static EventGroupHandle_t wifi_event_group; // Used to wait for connection result
@@ -10,7 +11,7 @@ static char saved_password[64];             // Stores the password
 
 WIFI ::WIFI()
 {
-    initNTP();
+    initSNTP();
 }
 
 // Wi-Fi event handler: handles connect/disconnect logic
@@ -139,49 +140,47 @@ void iotroam_connect()
     }
 }
 
-void WIFI ::initNTP()
+void WIFI ::initSNTP() // Initializing of the SNTP connection
 {
     ESP_LOGI("SNTP", "Initializing SNTP");
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    esp_sntp_setservername(0, "3.nl.pool.ntp.org"); // You can use a custom NTP server if needed
+    esp_sntp_setservername(0, "3.nl.pool.ntp.org");
     esp_sntp_init();
 }
 
-uint32_t WIFI ::printTime()
+uint32_t WIFI ::getTime()
 {
     time_t now;
-    struct tm timeinfo = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    struct tm timeinfo = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // Putting the whole struct on 0 to counteract warnings
     int retry = 0;
-    const int retry_count = 10;
 
-    while (timeinfo.tm_year < (2025 - 1900) && ++retry < retry_count)
+    // Comparing tm_year to 2025-1900 since tm_year starts counting the years since 1900
+    while ((timeinfo.tm_year < CURRENTYEAR) && (retry < MAX_FAILURES)) // Trying to fetch time for 10 times
     {
-        time(&now);
-        gmtime_r(&now, &timeinfo);
-        timeinfo.tm_hour += 2;
-        ESP_LOGI(TAG, "Waiting... %s", asctime(&timeinfo));
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        retry++;
+        time(&now);                          // Getting amount of seconds since 1970
+        gmtime_r(&now, &timeinfo);           // Transforming the input to YY:MM:DD:HH:MM:SS in UTC
+        timeinfo.tm_hour += CEST_CORRECTION; // Adding 2 hrs to transform UTC to CEST
+        ESP_LOGI(SNTP, "Waiting... %s", asctime(&timeinfo));
+        vTaskDelay(TWOSECONDS);
     }
 
-    if (retry == retry_count)
+    if (retry == MAX_FAILURES) // If the time isn't fetched properly log the raw time (only for debugging purposes)
     {
-        ESP_LOGI(TAG, "Raw time: %" PRIu64, (uint64_t)now);
+        ESP_LOGI(SNTP, "Raw time: %" PRIu64, (uint64_t)now);
     }
 
     // Calculate seconds since midnight
-    int seconds_since_midnight = timeinfo.tm_hour * 3600 +
-                                 timeinfo.tm_min * 60 +
+    int seconds_since_midnight = timeinfo.tm_hour * SECONDS_IN_HOUR +
+                                 timeinfo.tm_min * SECONDS_IN_MINUTE +
                                  timeinfo.tm_sec;
 
     // Convert to centibeats (1 centibeat = 0.864 seconds)
-    double centibeats = seconds_since_midnight / 0.864;
+    double centibeats = seconds_since_midnight / CENTIBEAT_MULTIPLIER;
 
-    // Optional: wrap at 100000 centibeats
-    centibeats = fmod(centibeats, 100000.0);
-
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "Current time: %s", strftime_buf);
-    ESP_LOGI(TAG, "Current time in centibeats: %05.0f", centibeats);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);    // Adding info to a printable string
+    ESP_LOGI(SNTP, "Current time: %s", strftime_buf);                 // Logging current time
+    ESP_LOGI(SNTP, "Current time in centibeats: %05.0f", centibeats); // Logging current centibeats
 
     return centibeats;
 }

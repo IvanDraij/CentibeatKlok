@@ -15,9 +15,7 @@ extern "C" void app_main(void)
 {
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
-    // lcd.printStr("Je moder", 1, 0);
     Stepmotor motor = Stepmotor();
-    // motor.moveStepMotorToCentibeat(25);
 
     iotroam_init("iotroam", "N4B4RiiNFg");
     iotroam_connect();
@@ -26,7 +24,7 @@ extern "C" void app_main(void)
 
     while (true)
     {
-        motor.moveStepMotorToCentibeat(wifi.printTime());
+        motor.moveStepMotorToCentibeat(wifi.getTime());
         vTaskDelay(200);
     }
 }
