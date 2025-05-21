@@ -30,7 +30,7 @@ extern "C"
 #define CEST_CORRECTION 2
 #define CENTIBEAT_MULTIPLIER 0.864
 #define SECONDS_IN_HOUR 3600
-#define SECONDS_IN_MINUTE
+#define SECONDS_IN_MINUTE 60
 
 void iotroam_init(const char *ssid, const char *password);
 void iotroam_connect();
