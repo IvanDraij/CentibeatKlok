@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 extern "C"
 {
@@ -24,6 +25,7 @@ class LCD
         LCD(); //constructor
         void printStr(char str[], uint8_t row, uint8_t col); 
         void sendComannd(uint8_t cmd);
+        void printInt(uint8_t data, uint8_t row, uint8_t col);
     protected:
 
     private:
