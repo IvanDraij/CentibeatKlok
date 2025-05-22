@@ -27,19 +27,19 @@
 #define SECONDS_IN_HOUR 3600
 #define SECONDS_IN_MINUTE 60
 
-void iotroam_init(const char *ssid, const char *password);
-void iotroam_connect();
-void iotroam_disconnect();
+
 
 class WIFI
 {
 private:
+  void iotroam_init(const char *ssid, const char *password);
   void initSNTP();
   char strftime_buf[64];
 
 public:
-  WIFI();
+  WIFI(const char *ssid, const char *password);
   uint32_t getTime();
+  void iotroam_connect();
 };
 
 #endif // IOTROAM_H

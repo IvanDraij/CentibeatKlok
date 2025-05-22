@@ -9,8 +9,9 @@ static int s_retry_num = 0;                 // Counter for reconnect attempts
 static char saved_ssid[32];                 // Stores the SSID
 static char saved_password[64];             // Stores the password
 
-WIFI ::WIFI()
+WIFI ::WIFI(const char *ssid, const char *password)
 {
+    iotroam_init(ssid, password);
     initSNTP();
 }
 
@@ -66,7 +67,7 @@ static void ip_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 // Initializes Wi-Fi with given SSID and password
-void iotroam_init(const char *ssid, const char *password)
+void WIFI::iotroam_init(const char *ssid, const char *password)
 {
     if (!ssid || !password)
         return; // Guard against null pointers
@@ -100,7 +101,7 @@ void iotroam_init(const char *ssid, const char *password)
 }
 
 // Starts connection attempt using previously initialized credentials
-void iotroam_connect()
+void WIFI::iotroam_connect()
 {
     wifi_event_group = xEventGroupCreate(); // Create event group for connection result
 
@@ -168,6 +169,7 @@ uint32_t WIFI ::getTime()
     if (retry == MAX_FAILURES) // If the time isn't fetched properly log the raw time (only for debugging purposes)
     {
         ESP_LOGI(SNTP, "Raw time: %" PRIu64, (uint64_t)now);
+        return 1;
     }
 
     // Calculate seconds since midnight

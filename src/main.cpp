@@ -16,11 +16,9 @@ extern "C" void app_main(void)
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
-
-    iotroam_init("iotroam", "N4B4RiiNFg");
-    iotroam_connect();
-
-    WIFI wifi = WIFI();
+    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
+    
+    wifi.iotroam_connect();
 
     while (true)
     {
