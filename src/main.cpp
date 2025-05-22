@@ -6,6 +6,7 @@ extern "C"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
+#include "7SegDis.h"
 }
 #include "iotroam.h"
 
@@ -17,8 +18,10 @@ extern "C" void app_main(void)
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
-    
+    SegDis beatDisplay = SegDis();
+
     wifi.iotroam_connect();
+    beatDisplay.displayNumber(4, 1);
 
     while (true)
     {
