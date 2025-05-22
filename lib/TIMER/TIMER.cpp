@@ -4,20 +4,30 @@
 
 extern uint32_t centibeatCount;
 
+ EventGroupHandle_t* xCreatedEventGroup;
+
 void centibeat_timer_callback(void *param) // task to centibeatCount the centibeats (not an interrupt)
 {
+    EventBits_t uxBits;
+
     centibeatCount++;
     if (centibeatCount == hunderdBeats) // 10000 centibeats
     {
         //NTP CODE
+        uxBits = xEventGroupSetBits(
+             *xCreatedEventGroup,
+            (1 << 0) );
+
     }
 }
 
 
 
-TIMER::TIMER() // constructor that calls the init function
+TIMER::TIMER(EventGroupHandle_t *xEventGroup) // constructor that calls the init function
 {
     TIMER::centibeat_timer_init();
+    xCreatedEventGroup = xEventGroup;
+
 }
 
 void TIMER::centibeat_timer_init() //initialises the timer for the centibeat

@@ -4,6 +4,8 @@
 extern "C"
 {
     #include "esp_timer.h"
+    #include "freertos/FreeRTOS.h"
+    #include "freertos/event_groups.h"
 }
 
 
@@ -11,11 +13,12 @@ extern "C"
 class TIMER
 {
     public:
-        TIMER(); //Constructor
+        TIMER(EventGroupHandle_t *xEventGroup); //Constructor
         void centibeat_timer_init(void);
     protected:
 
     private:
+
 };
 #endif // __cplusplus
 
