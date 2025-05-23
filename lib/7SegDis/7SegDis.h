@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
 
 #define PINA GPIO_NUM_27
 #define PINB GPIO_NUM_32
@@ -47,10 +48,11 @@ class SegDis
 {
 private:
     void SegInit();
+    void displayNumber(uint8_t number, uint8_t display);
 public:
     SegDis();
     void displayBeat(uint32_t centibeat);
-    void displayNumber(uint8_t number, uint8_t display);
+    
 };
 
 #endif

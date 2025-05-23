@@ -9,11 +9,12 @@ void SegDis::displayNumber(uint8_t number,uint8_t display)
 {
     static uint8_t prevDis = 0;// keeps track of the last display
     gpio_set_level(displayPins[prevDis], 1);// turns off the last display
-    gpio_set_level(displayPins[display], 0); // turns on the new display
+    
     for (uint8_t i = 0; i < SEGMENTS; i++)
     {
         gpio_set_level(segmentPins[i], numberDisplay[number][i]); //sets segment on or off depending on the numbers
     }
+    gpio_set_level(displayPins[display], 0); // turns on the new display
     prevDis = display; // save the current display in the last display
 }
 
@@ -33,4 +34,17 @@ void SegDis::SegInit()
   {
     gpio_set_level(displayPins[i], 1); // turn off all displays
   }
+}
+void SegDis::displayBeat(uint32_t centibeat)
+{
+    uint32_t beats = centibeat / 100; // to extract beat from centibeats
+    for (uint8_t i = 0; i < DISPLAYS; i++)
+    {
+        if(beats > 0) // so the first segement are empty if no need to display
+        {
+            displayNumber(beats % 10, 3-i);
+            beats /= 10; // 
+            vTaskDelay(pdMS_TO_TICKS(2));
+        }
+    }
 }
