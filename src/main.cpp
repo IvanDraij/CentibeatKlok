@@ -6,6 +6,7 @@ extern "C"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
+#include "Rotary_Enc.cpp"
 }
 #include "iotroam.h"
 
@@ -17,14 +18,15 @@ extern "C" void app_main(void)
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
 
-    iotroam_init("iotroam", "N4B4RiiNFg");
-    iotroam_connect();
+    // iotroam_init("iotroam", "N4B4RiiNFg");
+    // iotroam_connect();
 
-    WIFI wifi = WIFI();
+    // WIFI wifi = WIFI();
+    Rotary_Enc rotenc = Rotary_Enc();
 
     while (true)
     {
-        motor.moveStepMotorToCentibeat(wifi.getTime());
-        vTaskDelay(200);
+        // motor.moveStepMotorToCentibeat(wifi.getTime());
+        // vTaskDelay(200);
     }
 }
