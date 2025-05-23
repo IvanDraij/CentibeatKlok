@@ -13,7 +13,7 @@ extern "C"
 
 SemaphoreHandle_t xMutexCentibeat;
 
-uint16_t centibeatCount = 0;
+uint32_t centibeatCount = 97699;
 
 static void vTaskDisplayBeat(void* pvParamters);
 
@@ -26,7 +26,7 @@ extern "C" void app_main(void)
 
     wifi.iotroam_connect();
     xMutexCentibeat = xSemaphoreCreateMutex();
-    xTaskCreate(vTaskDisplayBeat,"7SegDis", 700, NULL, 1, NULL);
+    xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
 
 
     // while (true)
@@ -38,7 +38,7 @@ extern "C" void app_main(void)
 static void vTaskDisplayBeat(void* pvParamters)
 {
     SegDis beatDisplay = SegDis();
-    uint32_t localCentibeat= 7634;// TEST MOET 0 ZIJN
+    uint32_t localCentibeat= 7699;// TEST MOET 0 ZIJN
     for (;;)
     {
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat

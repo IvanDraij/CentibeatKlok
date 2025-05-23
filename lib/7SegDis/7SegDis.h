@@ -20,9 +20,12 @@
 #define NUMBERS 10
 #define SEGMENTS 7
 #define DISPLAYS 4
-#define BRIGHTNESSDELAY 20
+#define BRIGHTNESSDELAY 5
 #define CENTIBEATTOBEAT 100
-#define SINGLENUMBER 10
+#define TEN 10
+#define DISPLAYON 0
+#define DISPLAYOFF 1
+#define LASTDISPLAY 3
 
 
 const bool numberDisplay[NUMBERS][SEGMENTS]
