@@ -29,3 +29,11 @@ extern "C" void app_main(void)
         vTaskDelay(200);
     }
 }
+void initTasks()
+{
+   // xTaskCreate();
+}
+static void vTaskDisplayBeat(void* pvParamters)
+{
+
+}
