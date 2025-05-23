@@ -13,15 +13,15 @@ extern "C"
 
 SemaphoreHandle_t xMutexCentibeat;
 
-uint32_t centibeatCount = 97699;
+uint32_t centibeatCount = 0;
 
 static void vTaskDisplayBeat(void* pvParamters);
 
 extern "C" void app_main(void)
 {
-    // LCD lcd = LCD();
-    // TIMER centibeatTimer = TIMER();
-    // Stepmotor motor = Stepmotor();
+    LCD lcd = LCD();
+    TIMER centibeatTimer = TIMER();
+    Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
 
     wifi.iotroam_connect();
@@ -38,7 +38,7 @@ extern "C" void app_main(void)
 static void vTaskDisplayBeat(void* pvParamters)
 {
     SegDis beatDisplay = SegDis();
-    uint32_t localCentibeat= 7699;// TEST MOET 0 ZIJN
+    uint32_t localCentibeat= 0;// TEST MOET 0 ZIJN
     for (;;)
     {
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat

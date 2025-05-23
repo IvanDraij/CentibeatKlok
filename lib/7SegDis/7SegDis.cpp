@@ -38,6 +38,10 @@ void SegDis::SegInit()
 void SegDis::displayBeat(uint32_t centibeat)
 {
     uint32_t beats = centibeat / CENTIBEATTOBEAT; // to extract beat from centibeats
+    if(beats == 0 )
+    {
+        displayNumber(0, LASTDISPLAY);
+    }
     for (uint8_t i = 0; i < DISPLAYS; i++)
     {
         if(beats > 0) //when the number is done stop
