@@ -21,32 +21,21 @@ void Rotary_Enc::isrHandlerRotation(void *arg)
   Rotary_Enc *self = static_cast<Rotary_Enc *>(arg); // cast Object into static class so it's accessable through RTOS
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;     // Initialize higher priority task on false
 
-  // Step 1: Read the current state of the rotary encoder pins
-  uint8_t signalA = gpio_get_level(ROTARY_A_GPIO); // Reads 0 or 1
-  uint8_t signalB = gpio_get_level(ROTARY_B_GPIO); // Reads 0 or 1
+  // Read the current levels of rotary encoder pins
+  uint8_t signalA = gpio_get_level(ROTARY_A_GPIO);
+  uint8_t signalB = gpio_get_level(ROTARY_B_GPIO);
 
-  // Step 2: Determine the current position of the encoder as a number between 0 and 3
-  // The combination of A and B gives us 4 possible states: 0 (00), 1 (01), 2 (10), 3 (11)
-  uint8_t currentPosition = 0;
+  // Convert signals into a 2-bit value (values: 0b00 to 0b11)
+  uint8_t currentState = (signalA << 1) | signalB;
 
-  if (signalA == 0 && signalB == 0)
-    currentPosition = 0;
-  else if (signalA == 0 && signalB == 1)
-    currentPosition = 1;
-  else if (signalA == 1 && signalB == 0)
-    currentPosition = 2;
-  else if (signalA == 1 && signalB == 1)
-    currentPosition = 3;
+  // Combine previous and current state into a 4-bit transition code, this is used to check if there has been a change in rotary encoder stance.
+  uint8_t transitionCode = (self->prevABState << 2) | currentState;
 
-  // Step 3: Combine previous and current positions to figure out movement
-  // This creates a unique number between 0 and 15 that represents the transition
-  int transitionCode = (self->prevABState * 4) + currentPosition;
+  // Update the previous state for the next interrupt
+  self->prevABState = currentState;
 
-  // Step 4: Save current position for next time
-  self->prevABState = currentPosition;
-
-  // Step 5: Check how the encoder moved using the transition code
-  int movement = self->encoder_state_table[transitionCode]; // Result will be -1, 0, or +1
+  // Look up the movement (+1, -1, or 0) using the transition code
+  int8_t movement = self->encoder_state_table[transitionCode];
 
   if (movement != 0)
   {
