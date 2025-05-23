@@ -11,17 +11,18 @@ extern "C"
 #include "iotroam.h"
 
 uint16_t centibeatCount = 0;
+EventGroupHandle_t xCreatedEventGroup;
 
 extern "C" void app_main(void)
 {
-    EventGroupHandle_t xCreatedEventGroup;
+    
     xCreatedEventGroup = xEventGroupCreate();
 
     EventBits_t uxBits;
 
     
     LCD lcd = LCD();
-    TIMER centibeatTimer = TIMER(&xCreatedEventGroup);
+    TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     

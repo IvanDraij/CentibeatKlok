@@ -4,7 +4,8 @@
 
 extern uint32_t centibeatCount;
 
- EventGroupHandle_t* xCreatedEventGroup;
+ extern EventGroupHandle_t xCreatedEventGroup;
+ extern SemaphoreHandle_t xMutexCentibeat;
 
 void centibeat_timer_callback(void *param) // task to centibeatCount the centibeats (not an interrupt)
 {
@@ -15,7 +16,7 @@ void centibeat_timer_callback(void *param) // task to centibeatCount the centibe
     {
         //NTP CODE
         uxBits = xEventGroupSetBits(
-             *xCreatedEventGroup,
+             xCreatedEventGroup,
             (1 << 0) );
 
     }
@@ -23,11 +24,9 @@ void centibeat_timer_callback(void *param) // task to centibeatCount the centibe
 
 
 
-TIMER::TIMER(EventGroupHandle_t *xEventGroup) // constructor that calls the init function
+TIMER::TIMER() // constructor that calls the init function
 {
     TIMER::centibeat_timer_init();
-    xCreatedEventGroup = xEventGroup;
-
 }
 
 void TIMER::centibeat_timer_init() //initialises the timer for the centibeat
