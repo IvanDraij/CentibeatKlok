@@ -3,6 +3,7 @@ extern "C"
 #include <stdio.h>
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
@@ -10,7 +11,10 @@ extern "C"
 }
 #include "iotroam.h"
 
+SemaphoreHandle_t xMutexCentibeat;
+
 uint16_t centibeatCount = 0;
+
 static void vTaskDisplayBeat(void* pvParamters);
 
 extern "C" void app_main(void)
@@ -19,10 +23,10 @@ extern "C" void app_main(void)
     // TIMER centibeatTimer = TIMER();
     // Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
-    SegDis beatDisplay = SegDis();
 
     wifi.iotroam_connect();
-    xTaskCreate(vTaskDisplayBeat,"7SegDis", 700, &beatDisplay, 1, NULL);
+    xMutexCentibeat = xSemaphoreCreateMutex();
+    xTaskCreate(vTaskDisplayBeat,"7SegDis", 700, NULL, 1, NULL);
 
 
     // while (true)
@@ -33,11 +37,15 @@ extern "C" void app_main(void)
 }
 static void vTaskDisplayBeat(void* pvParamters)
 {
-    SegDis* display = (SegDis*) pvParamters;
-    uint32_t localCentibeat= 7634;
+    SegDis beatDisplay = SegDis();
+    uint32_t localCentibeat= 7634;// TEST MOET 0 ZIJN
     for (;;)
     {
-        //if() // semaphore beschikbaar update local
-        display->displayBeat(localCentibeat);
+        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat
+        {
+            localCentibeat = centibeatCount;
+            xSemaphoreGive(xMutexCentibeat);
+        } 
+        beatDisplay.displayBeat(localCentibeat);
     }
 }
