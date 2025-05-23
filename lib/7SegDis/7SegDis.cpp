@@ -43,8 +43,8 @@ void SegDis::displayBeat(uint32_t centibeat)
         if(beats > 0) // so the first segement are empty if no need to display
         {
             displayNumber(beats % 10, 3-i);
-            beats /= 10; // 
-            vTaskDelay(pdMS_TO_TICKS(2));
+            beats /= 10; // separate the different letters
+            vTaskDelay(pdMS_TO_TICKS(20)); // small delay to get the brghtness up
         }
     }
 }
