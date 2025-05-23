@@ -39,12 +39,12 @@ void Rotary_Enc::isrHandlerRotation(void *arg)
     portYIELD_FROM_ISR();
 }
 
-void Rotary_Enc ::taskEntryPointButton(void *arg) //Function to get from ISR to task
+void Rotary_Enc ::taskEntryPointButton(void *arg) // Function to initialise the loop function for RTOS
 {
   static_cast<Rotary_Enc *>(arg)->taskLoopButton(); // Cast the Object made in main to the static class and run taskLoop within that task
 }
 
-void Rotary_Enc::taskEntryPointRotation(void *arg) //Function to get from ISR to task
+void Rotary_Enc::taskEntryPointRotation(void *arg) // Function to initialise the loop function for RTOS
 {
   static_cast<Rotary_Enc *>(arg)->taskLoopRotation(); // Cast the Object made in main to the static class and run taskLoop within that task
 }
