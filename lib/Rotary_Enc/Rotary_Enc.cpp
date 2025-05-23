@@ -18,25 +18,60 @@ void Rotary_Enc::isrHandlerButton(void *arg)
 
 void Rotary_Enc::isrHandlerRotation(void *arg)
 {
-  Rotary_Enc *self = static_cast<Rotary_Enc *>(arg); // Cast object in class as static
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;     // Clear higher priority found
+  Rotary_Enc *self = static_cast<Rotary_Enc *>(arg); // cast Object into static class so it's accessable through RTOS
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;     // Initialize higher priority task on false
 
-  // Read out both pins
-  uint8_t a = gpio_get_level(ROTARY_A_GPIO);
-  uint8_t b = gpio_get_level(ROTARY_B_GPIO);
+  // Step 1: Read the current state of the rotary encoder pins
+  uint8_t signalA = gpio_get_level(ROTARY_A_GPIO); // Reads 0 or 1
+  uint8_t signalB = gpio_get_level(ROTARY_B_GPIO); // Reads 0 or 1
 
-  RotationDirection dir; // Initialising enum
+  // Step 2: Determine the current position of the encoder as a number between 0 and 3
+  // The combination of A and B gives us 4 possible states: 0 (00), 1 (01), 2 (10), 3 (11)
+  uint8_t currentPosition = 0;
 
-  // Check which way to turn
-  if (a == b)
-    dir = COUNTERCLOCKWISE;
-  else
-    dir = CLOCKWISE;
+  if (signalA == 0 && signalB == 0)
+    currentPosition = 0;
+  else if (signalA == 0 && signalB == 1)
+    currentPosition = 1;
+  else if (signalA == 1 && signalB == 0)
+    currentPosition = 2;
+  else if (signalA == 1 && signalB == 1)
+    currentPosition = 3;
 
-  xQueueSendFromISR(self->rotationQueue, &dir, &xHigherPriorityTaskWoken); // Add to queue using RTOS
+  // Step 3: Combine previous and current positions to figure out movement
+  // This creates a unique number between 0 and 15 that represents the transition
+  int transitionCode = (self->prevABState * 4) + currentPosition;
 
-  if (xHigherPriorityTaskWoken) // If task with higher priority has awoken, immediately go to that task
+  // Step 4: Save current position for next time
+  self->prevABState = currentPosition;
+
+  // Step 5: Check how the encoder moved using the transition code
+  int movement = self->encoder_state_table[transitionCode]; // Result will be -1, 0, or +1
+
+  if (movement != 0)
+  {
+    // Accumulate movement steps
+    self->positionCounter += movement;
+
+    // If we've collected 4 steps in one direction, it's a full tick
+    if (self->positionCounter >= 4)
+    {
+      self->positionCounter = 0; // Reset counter
+      RotationDirection dir = COUNTERCLOCKWISE;
+      xQueueSendFromISR(self->rotationQueue, &dir, &xHigherPriorityTaskWoken);
+    }
+    else if (self->positionCounter <= -4)
+    {
+      self->positionCounter = 0; // Reset counter
+      RotationDirection dir = CLOCKWISE;
+      xQueueSendFromISR(self->rotationQueue, &dir, &xHigherPriorityTaskWoken);
+    }
+  }
+  // If a higher-priority task was woken by the queue send, yield to it
+  if (xHigherPriorityTaskWoken)
+  {
     portYIELD_FROM_ISR();
+  }
 }
 
 void Rotary_Enc ::taskEntryPointButton(void *arg) // Function to initialise the loop function for RTOS
@@ -53,17 +88,16 @@ void Rotary_Enc::taskLoopButton()
 {
   while (true)
   {
-    if (xSemaphoreTake(buttonSemaphore, portMAX_DELAY)) // Take semaphore
+    if (xSemaphoreTake(buttonSemaphore, portMAX_DELAY))
     {
+      gpio_intr_disable(BUTTON_GPIO); // Disable ISR from button to get 0 debounce
+      vTaskDelay(FIFTYMS);            // debounce
       if (gpio_get_level(BUTTON_GPIO) == 0)
       {
-        vTaskDelay(HALF_A_SECOND);            // Debounce so no double clicks happen
-        if (gpio_get_level(BUTTON_GPIO) == 0) // Check whether button is still not pressed
-        {
-          ESP_LOGI("RotaryEncoderButton", "Button pressed");
-          // Add more logic here
-        }
+        ESP_LOGI("RotaryEncoderButton", "Button pressed");
+        // Add RTOS semaphore here
       }
+      gpio_intr_enable(BUTTON_GPIO); // Enable ISR
     }
   }
 }
@@ -71,30 +105,23 @@ void Rotary_Enc::taskLoopButton()
 void Rotary_Enc::taskLoopRotation()
 {
   RotationDirection dir; // Initialising enum
-  uint64_t lastHandledTime = 0;
   while (true)
   {
     if (xQueueReceive(rotationQueue, &dir, portMAX_DELAY))
     {
-      uint64_t now = esp_timer_get_time();  // Get time
-      if (now - lastHandledTime >= FIFTYMS) // 50ms debounce
+      // Check whether rotary encoder was turned CW or CCW
+      switch (dir)
       {
-        lastHandledTime = now; // Log lasthandled time in variable
-
-        // Check whether rotary encoder was turned CW or CCW
-        switch (dir)
-        {
-        case CLOCKWISE:
-          ESP_LOGI("RotaryEncoder", "Rotated CW");
-          // Put more logic here (might have to change output of function)
-          break;
-        case COUNTERCLOCKWISE:
-          ESP_LOGI("RotaryEncoder", "Rotated CCW");
-          // Put more logic here (might have to change output of function)
-          break;
-        default:
-          break;
-        }
+      case CLOCKWISE:
+        ESP_LOGI("RotaryEncoder", "Rotated CW");
+        // Put more logic here (might have to change output of function)
+        break;
+      case COUNTERCLOCKWISE:
+        ESP_LOGI("RotaryEncoder", "Rotated CCW");
+        // Put more logic here (might have to change output of function)
+        break;
+      default:
+        break;
       }
     }
   }
@@ -124,7 +151,8 @@ void Rotary_Enc ::initRotaryEnc()
   gpio_install_isr_service(0); // Install ISR service
 
   gpio_isr_handler_add(BUTTON_GPIO, isrHandlerButton, (void *)this);     // Register ISR handler for button
-  gpio_isr_handler_add(ROTARY_A_GPIO, isrHandlerRotation, (void *)this); // Register ISR handler for rotary
+  gpio_isr_handler_add(ROTARY_A_GPIO, isrHandlerRotation, (void *)this); // Register ISR handler for rotary A
+  gpio_isr_handler_add(ROTARY_B_GPIO, isrHandlerRotation, (void *)this); // Register ISR handler for rotary B
 
   xTaskCreate(taskEntryPointButton, "RotaryBtnTask", 2048, this, 10, NULL);   // Create RTOS task for button
   xTaskCreate(taskEntryPointRotation, "RotaryRotTask", 2048, this, 10, NULL); // Create RTOS task for rotary

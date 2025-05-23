@@ -10,11 +10,10 @@
 #include "esp_timer.h"
 
 #define BUTTON_GPIO GPIO_NUM_39 // VN pin
-#define HALF_A_SECOND (pdMS_TO_TICKS(50))
+#define FIFTYMS (pdMS_TO_TICKS(50))
 
 #define ROTARY_A_GPIO GPIO_NUM_34 // S1 (CLK) on D34
 #define ROTARY_B_GPIO GPIO_NUM_35 // S2 (DT) on D35
-#define FIFTYMS 50000
 
 enum RotationDirection
 {
@@ -35,6 +34,13 @@ private:
   gpio_num_t buttonPin;
   QueueHandle_t rotationQueue;
   uint64_t lastRotationTime = 0; // For debouncing rotations
+  uint8_t prevABState = 0;       // Track previous A/B state
+  int8_t positionCounter = 0;    // counts steps per detent
+  const int8_t encoder_state_table[16] = {
+      0, -1, 1, 0,
+      1, 0, 0, -1,
+      -1, 0, 0, 1,
+      0, 1, -1, 0};
   void initRotaryEnc();
   static void isrHandlerButton(void *arg);
   static void isrHandlerRotation(void *arg);
