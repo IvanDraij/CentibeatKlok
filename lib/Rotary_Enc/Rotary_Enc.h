@@ -33,9 +33,8 @@ public:
 private:
   gpio_num_t buttonPin;
   QueueHandle_t rotationQueue;
-  uint64_t lastRotationTime = 0; // For debouncing rotations
-  uint8_t prevABState = 0;       // Track previous A/B state
-  int8_t positionCounter = 0;    // counts steps per detent
+  uint8_t prevABState = 0;    // Track previous A/B state
+  int8_t positionCounter = 0; // counts steps per detent
   const int8_t encoder_state_table[16] = {
       0, -1, 1, 0,
       1, 0, 0, -1,
