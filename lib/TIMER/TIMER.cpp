@@ -9,16 +9,16 @@ extern uint32_t centibeatCount;
 
 void centibeat_timer_callback(void *param) // task to centibeatCount the centibeats (not an interrupt)
 {
-    EventBits_t uxBits;
-
-    centibeatCount++;
-    if (centibeatCount == hunderdBeats) // 10000 centibeats
+    if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)
     {
-        //NTP CODE
-        uxBits = xEventGroupSetBits(
-             xCreatedEventGroup,
-            (1 << 0) );
-
+        centibeatCount++;
+        
+        if (centibeatCount == hunderdBeats) // 10000 centibeats
+        {
+            //NTP CODE
+            xEventGroupSetBits(xCreatedEventGroup, (1 << 0));
+        }
+        xSemaphoreGive(xMutexCentibeat);
     }
 }
 
