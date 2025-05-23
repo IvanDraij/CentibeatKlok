@@ -22,8 +22,8 @@ void Rotary_Enc::isrHandlerRotation(void *arg)
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;     // Clear higher priority found
 
   // Read out both pins
-  int a = gpio_get_level(ROTARY_A_GPIO);
-  int b = gpio_get_level(ROTARY_B_GPIO);
+  uint8_t a = gpio_get_level(ROTARY_A_GPIO);
+  uint8_t b = gpio_get_level(ROTARY_B_GPIO);
 
   RotationDirection dir; // Initialising enum
 
