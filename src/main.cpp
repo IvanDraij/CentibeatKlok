@@ -6,12 +6,23 @@ extern "C"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
+#include "esp_log.h"
+
 }
 #include "iotroam.h"
 
 #define MODE_BUTTON_GPIO GPIO_NUM_36
 
 uint16_t centibeatCount = 0;
+
+bool automaticMode = true;
+
+void vTaskModeButtonInit();
+void vTaskModeButton(void *arg);
+void taskLoopModeButton();
+
+
+SemaphoreHandle_t switchButtonSemaphore;
 
 extern "C" void app_main(void)
 {
@@ -35,6 +46,7 @@ extern "C" void app_main(void)
 void initTasks()
 {
     vTaskModeButtonInit();
+    switchButtonSemaphore = xSemaphoreCreateBinary();                 // Create the switchButtonSemaphore
 }
 
 void vTaskModeButtonInit()
@@ -54,5 +66,25 @@ void vTaskModeButtonInit()
 
 void vTaskModeButton(void *arg)
 {
-    xSemaphoreGiveFromISR()
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;                           // Initialise a variable to check whether a task with high priority was waiting on the semaphore
+    xSemaphoreGiveFromISR(switchButtonSemaphore, &xHigherPriorityTaskWoken);
+}
+
+void taskLoopModeButton()
+{
+    while (true)
+    {
+        if (xSemaphoreTake(switchButtonSemaphore,portMAX_DELAY))
+        {
+            if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
+            {
+                vTaskDelay(100);
+                if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
+                {
+                    ESP_LOGI("switchButtonPressed", "switchButton pressed");
+                    automaticMode = !automaticMode;
+                }
+            }
+        }
+    }
 }
