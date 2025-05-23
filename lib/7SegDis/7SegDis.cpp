@@ -10,7 +10,7 @@ void SegDis::displayNumber(uint8_t number,uint8_t display)
     static uint8_t prevDis = 0;
     gpio_set_level(displayPins[prevDis], 1);
     gpio_set_level(displayPins[display], 0);
-    for (uint8_t i = 0; i < NUMBERS; i++)
+    for (uint8_t i = 0; i < SEGMENTS; i++)
     {
         gpio_set_level(segmentPins[i], numberDisplay[number][i]);
     }
