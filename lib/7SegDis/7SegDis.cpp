@@ -37,14 +37,14 @@ void SegDis::SegInit()
 }
 void SegDis::displayBeat(uint32_t centibeat)
 {
-    uint32_t beats = centibeat / 100; // to extract beat from centibeats
+    uint32_t beats = centibeat / CENTIBEATTOBEAT; // to extract beat from centibeats
     for (uint8_t i = 0; i < DISPLAYS; i++)
     {
         if(beats > 0) // so the first segement are empty if no need to display
         {
-            displayNumber(beats % 10, 3-i);
-            beats /= 10; // separate the different letters
-            vTaskDelay(pdMS_TO_TICKS(20)); // small delay to get the brghtness up
+            displayNumber(beats % SINGLENUMBER, 3-i);
+            beats /= SINGLENUMBER; // separate the different letters
+            vTaskDelay(pdMS_TO_TICKS(BRIGHTNESSDELAY)); // small delay to get the brghtness up
         }
     }
 }
