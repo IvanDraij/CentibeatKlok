@@ -36,12 +36,6 @@ extern "C" void app_main(void)
     xMutexCentibeat = xSemaphoreCreateMutex();
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
 
-
-    // while (true)
-    // {
-    //     // motor.moveStepMotorToCentibeat(wifi.getTime());
-    //     // vTaskDelay(200);
-    // }
 }
 static void vTaskDisplayBeat(void* pvParamters)
 {
