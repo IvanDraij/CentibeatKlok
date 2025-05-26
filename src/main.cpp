@@ -12,7 +12,7 @@ extern "C"
 #include "iotroam.h"
 
 #define modeSwitchButtonPriority 3
-#define MODE_BUTTON_GPIO GPIO_NUM_12
+#define MODE_BUTTON_GPIO GPIO_NUM_36
 #define usStackDepthModeSwitchButton 2048
 #define hundredmsDelay 100
 
