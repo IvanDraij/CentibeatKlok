@@ -55,12 +55,6 @@ static void ip_event_handler(void *arg, esp_event_base_t event_base,
 
         s_retry_num = 0; // Reset retry counter
 
-        // Display IP on LCD
-        lcd_put_cursor(1, 0);
-        char ip_str[16];
-        sprintf(ip_str, IPSTR, IP2STR(&event->ip_info.ip));
-        lcd_send_string(ip_str);
-
         // Signal connection success
         xEventGroupSetBits(wifi_event_group, WIFI_SUCCESS);
     }

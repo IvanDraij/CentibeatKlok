@@ -30,15 +30,16 @@ extern "C" void app_main(void)
     xCreatedEventGroup = xEventGroupCreate();
 
     EventBits_t uxBits;
-    TIMER centibeatTimer = TIMER();
+    
     LCD lcd = LCD();
-    //WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
+    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
 
-    //wifi.iotroam_connect();
+    wifi.iotroam_connect();
     xMutexCentibeat = xSemaphoreCreateMutex();
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
     xTaskCreate(vTaskDisplayCentibeat,"stepper", 2048, NULL, 3, NULL);
     xTaskCreate(vTaskTiming, "TimingTask", 2048, NULL, 2, &xYourTaskHandle);
+    TIMER centibeatTimer = TIMER();
 }
 static void vTaskDisplayBeat(void* pvParamters)
 {
