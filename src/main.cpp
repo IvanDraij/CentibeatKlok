@@ -11,45 +11,65 @@ extern "C"
 }
 #include "iotroam.h"
 
+#define modeSwitchButtonPriority 3
 #define MODE_BUTTON_GPIO GPIO_NUM_36
+#define usStackDepthModeSwitchButton 2048
+#define hundredmsDelay 100
 
 uint16_t centibeatCount = 0;
 
 bool automaticMode = true;
 
-void vTaskModeButtonInit();
+void initTasks();
+void initButtonInterrupt();
 void vTaskModeButton(void *arg);
-void taskLoopModeButton();
+void vTaskLoopModeButton(void *arg);
+void showModeOnDisplay(bool automaticMode);
+
 
 
 SemaphoreHandle_t switchButtonSemaphore;
 
+
+
 extern "C" void app_main(void)
 {
-    
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
 
-    void initTasks();
+    initTasks();
     
     wifi.iotroam_connect();
 
     while (true)
     {
-        motor.moveStepMotorToCentibeat(wifi.getTime());
-        vTaskDelay(200);
+    if (automaticMode)
+        {
+            char tempArray[1] = {'A'};
+            lcd.printStr(tempArray,0,14);
+        }
+    else
+        {
+            char tempArray[1] = {'M'};
+            lcd.printStr(tempArray,0,14);
+        }
+
+
+    motor.moveStepMotorToCentibeat(wifi.getTime());
+    vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
 void initTasks()
 {
-    vTaskModeButtonInit();
+    initButtonInterrupt();
     switchButtonSemaphore = xSemaphoreCreateBinary();                 // Create the switchButtonSemaphore
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,NULL,modeSwitchButtonPriority,NULL);
 }
 
-void vTaskModeButtonInit()
+void initButtonInterrupt()
 {
     // Configure BUTTON
   gpio_config_t btn_conf = {};
@@ -61,16 +81,18 @@ void vTaskModeButtonInit()
 
     gpio_install_isr_service(0); // Install ISR service
 
-    gpio_isr_handler_add(MODE_BUTTON_GPIO, vTaskModeButton, nullptr);     // Register ISR handler for button
+    gpio_isr_handler_add(MODE_BUTTON_GPIO, vTaskModeButton, nullptr);
 }
 
-void vTaskModeButton(void *arg)
+void IRAM_ATTR vTaskModeButton(void *arg)
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;                           // Initialise a variable to check whether a task with high priority was waiting on the semaphore
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR(switchButtonSemaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void taskLoopModeButton()
+
+void vTaskLoopModeButton(void *arg)
 {
     while (true)
     {
@@ -78,11 +100,12 @@ void taskLoopModeButton()
         {
             if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
             {
-                vTaskDelay(pdMS_TO_TICKS(100));
+                vTaskDelay(pdMS_TO_TICKS(hundredmsDelay));
                 if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
                 {
                     ESP_LOGI("switchButtonPressed", "switchButton pressed");
                     automaticMode = !automaticMode;
+                    showModeOnDisplay(automaticMode);
                 }
             }
         }
