@@ -11,22 +11,30 @@ extern "C"
 }
 #include "iotroam.h"
 
+#define SYNCTIME (1 << 0)
+
 SemaphoreHandle_t xMutexCentibeat;
+EventGroupHandle_t xKlokEventgroup;
 
 uint32_t centibeatCount = 0;
 
 static void vTaskDisplayBeat(void* pvParamters);
+static void vTaskSyncNTP(void* pvParameters);
 
 extern "C" void app_main(void)
 {
+
+    xKlokEventgroup = xEventGroupCreate();
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
-    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
+    WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
 
-    wifi.iotroam_connect();
+    wifi->iotroam_connect();
+
     xMutexCentibeat = xSemaphoreCreateMutex();
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
+    xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
 
 
     // while (true)
@@ -47,5 +55,19 @@ static void vTaskDisplayBeat(void* pvParamters)
             xSemaphoreGive(xMutexCentibeat);
         } 
         beatDisplay.displayBeat(localCentibeat);
+    }
+}
+
+static void vTaskSyncNTP(void* pvParameters)
+{
+    WIFI* wifi = static_cast<WIFI*>(pvParameters);
+    for (;;)
+    {
+        xEventGroupWaitBits(xKlokEventgroup, SYNCTIME, pdTRUE, pdFALSE, portMAX_DELAY); // wait for flag to get time from SNTP
+        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get semaphore for protected writing
+        {
+            centibeatCount = wifi->getTime();// sync centibeat time with SNTP
+            xSemaphoreGive(xMutexCentibeat);
+        }
     }
 }
