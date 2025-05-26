@@ -78,7 +78,7 @@ void taskLoopModeButton()
         {
             if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
             {
-                vTaskDelay(100);
+                vTaskDelay(pdMS_TO_TICKS(100));
                 if (gpio_get_level(MODE_BUTTON_GPIO) == 0)
                 {
                     ESP_LOGI("switchButtonPressed", "switchButton pressed");
