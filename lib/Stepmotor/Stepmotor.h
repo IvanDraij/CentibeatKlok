@@ -11,7 +11,7 @@
 #define IN3 GPIO_NUM_17
 #define IN4 GPIO_NUM_16
 
-#define STEP_DELAY_MS 10
+#define STEP_DELAY_MS 5
 //360 degrees is 4096 steps, 1 centibeat is 100th of 360 degrees. 4096/100 = 40.96. Rounded it's 41.
 #define AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT 41
 #define AMOUNT_OF_STEPS 8 //For half step mode

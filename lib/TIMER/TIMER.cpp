@@ -1,27 +1,14 @@
 #include "TIMER.h"
 #define amountOfmsForOneCentibeat   864000
-#define hunderdBeats                 10000
 
-extern uint32_t centibeatCount;
+extern TaskHandle_t xYourTaskHandle;
 
- extern EventGroupHandle_t xCreatedEventGroup;
- extern SemaphoreHandle_t xMutexCentibeat;
-
-void centibeat_timer_callback(void *param) // task to centibeatCount the centibeats (not an interrupt)
+void centibeat_timer_callback(void *param)
 {
-    if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)
-    {
-        centibeatCount++;
-        
-        if (centibeatCount == hunderdBeats) // 10000 centibeats
-        {
-            //NTP CODE
-            xEventGroupSetBits(xCreatedEventGroup, (1 << 0));
-        }
-        xSemaphoreGive(xMutexCentibeat);
-    }
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(xYourTaskHandle, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
-
 
 
 TIMER::TIMER() // constructor that calls the init function
