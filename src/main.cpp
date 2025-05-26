@@ -20,12 +20,10 @@ uint16_t centibeatCount = 0;
 
 bool automaticMode = true;
 
-void initTasks();
+void initTasks(LCD *lcd);
 void initButtonInterrupt();
 void vTaskModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
-void showModeOnDisplay(bool automaticMode);
-
 
 
 SemaphoreHandle_t switchButtonSemaphore;
@@ -38,35 +36,22 @@ extern "C" void app_main(void)
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
-
-    initTasks();
+    initTasks(&lcd);
     
     wifi.iotroam_connect();
 
     while (true)
     {
-    if (automaticMode)
-        {
-            char tempArray[1] = {'A'};
-            lcd.printStr(tempArray,0,14);
-        }
-    else
-        {
-            char tempArray[1] = {'M'};
-            lcd.printStr(tempArray,0,14);
-        }
-
-
-    motor.moveStepMotorToCentibeat(wifi.getTime());
-    vTaskDelay(pdMS_TO_TICKS(200));
+        motor.moveStepMotorToCentibeat(wifi.getTime());
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
-void initTasks()
+void initTasks(LCD *lcd)
 {
     initButtonInterrupt();
     switchButtonSemaphore = xSemaphoreCreateBinary();                 // Create the switchButtonSemaphore
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,NULL,modeSwitchButtonPriority,NULL);
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
 }
 
 void initButtonInterrupt()
@@ -94,6 +79,9 @@ void IRAM_ATTR vTaskModeButton(void *arg)
 
 void vTaskLoopModeButton(void *arg)
 {
+
+    LCD *lcd = static_cast<LCD*>(arg);
+
     while (true)
     {
         if (xSemaphoreTake(switchButtonSemaphore,portMAX_DELAY))
@@ -105,7 +93,8 @@ void vTaskLoopModeButton(void *arg)
                 {
                     ESP_LOGI("switchButtonPressed", "switchButton pressed");
                     automaticMode = !automaticMode;
-                    showModeOnDisplay(automaticMode);
+                    lcd->sendComannd(automaticMode ? AUTOMODE : MANUAL);
+
                 }
             }
         }
