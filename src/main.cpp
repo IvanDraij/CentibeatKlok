@@ -36,6 +36,8 @@ extern "C" void app_main(void)
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
     xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
 
+    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+
 
     // while (true)
     // {
