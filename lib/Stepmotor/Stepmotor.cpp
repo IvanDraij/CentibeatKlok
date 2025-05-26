@@ -71,7 +71,7 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 
   for (int step = 0; step < numberOfSteps; step++) // Loop to go through the total amount of steps needed
   {
-    esp_task_wdt_reset();
+    esp_task_wdt_reset(); // reset watchdog to keep the code going
     totalStepsTakenInADay++;
     if (totalStepsTakenInADay != 0 && ((totalStepsTakenInADay % MAXSTEPS) % MODULO25 == 0)) // Using modulo 25 to deteremine if the amount of steps is dividable by 25
     {
@@ -89,7 +89,7 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
 
     for (int i = 0; i < rotationPerCentibeat; i++) // Loop to take 1 inner step within the stepmotor
     {
-      esp_task_wdt_reset(); // reset watchdog
+      esp_task_wdt_reset(); // reset watchdog to keep code going
       gpio_set_level(IN1, step_sequence[sequenceIndex][0]);
       gpio_set_level(IN2, step_sequence[sequenceIndex][1]);
       gpio_set_level(IN3, step_sequence[sequenceIndex][2]);

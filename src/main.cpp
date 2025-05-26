@@ -13,17 +13,17 @@ extern "C"
 #include "iotroam.h"
 #include "esp_task_wdt.h"
 
-#define HUNDERDBEATS      10000
+#define HUNDREDBEATS      10000
 
 EventGroupHandle_t xCreatedEventGroup;
 SemaphoreHandle_t xMutexCentibeat;
-TaskHandle_t xYourTaskHandle = NULL;
+TaskHandle_t xTimerTaskHandle = NULL;
 
 uint32_t centibeatCount = 0;
 
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
-static void vTaskTiming(void* pvParamters);
+static void vTaskTimer(void* pvParamters);
 
 extern "C" void app_main(void)
 {
@@ -32,19 +32,20 @@ extern "C" void app_main(void)
     EventBits_t uxBits;
     
     LCD lcd = LCD();
-    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
 
+    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     wifi.iotroam_connect();
     xMutexCentibeat = xSemaphoreCreateMutex();
+
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
     xTaskCreate(vTaskDisplayCentibeat,"stepper", 2048, NULL, 3, NULL);
-    xTaskCreate(vTaskTiming, "TimingTask", 2048, NULL, 2, &xYourTaskHandle);
+    xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 2, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
 }
 static void vTaskDisplayBeat(void* pvParamters)
 {
     SegDis beatDisplay = SegDis();
-    uint32_t localCentibeat= 0;// TEST MOET 0 ZIJN
+    uint32_t localCentibeat= 0;
     for (;;)
     {
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat
@@ -58,41 +59,34 @@ static void vTaskDisplayBeat(void* pvParamters)
 static void vTaskDisplayCentibeat(void* pvParameters)
 {
     Stepmotor motor = Stepmotor();
-    uint32_t localCentibeat= 0;// TEST MOET 0 ZIJN
-    bool changed= false;
+    uint32_t localCentibeat= 0;
     for (;;)
     {
        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat
         {
-            if(localCentibeat != centibeatCount){
-                localCentibeat = centibeatCount;
-                changed= true;
+            if(localCentibeat != centibeatCount)
+            {
+                localCentibeat = centibeatCount; //change the local time to the global time
             }
-            xSemaphoreGive(xMutexCentibeat);
+            xSemaphoreGive(xMutexCentibeat); //free semaphore
         } 
-        if(changed)
-        {
-        
-        motor.moveStepMotorToCentibeat(localCentibeat);
-        changed = false;
-        }
+        motor.moveStepMotorToCentibeat(localCentibeat); //always set stepmotor to the local time
     }
 }
-static void vTaskTiming(void* pvParamters)
+static void vTaskTimer(void* pvParamters)
 { 
-    
     for (;;)
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // wait until timer give signal
+        //run the task
+        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get the mutex to change centibeat
         {
             centibeatCount++;
-            if (centibeatCount == HUNDERDBEATS)
+            if (centibeatCount == HUNDREDBEATS)
             {
-                xEventGroupSetBits(xCreatedEventGroup, (1 << 0));
+                xEventGroupSetBits(xCreatedEventGroup, (1 << 0));// every hundred beats sync with ntp
             }
             xSemaphoreGive(xMutexCentibeat);
         }
     }
-    
 }

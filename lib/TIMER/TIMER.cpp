@@ -1,12 +1,12 @@
 #include "TIMER.h"
 #define amountOfmsForOneCentibeat   864000
 
-extern TaskHandle_t xYourTaskHandle;
+extern TaskHandle_t xTimerTaskHandle;
 
 void centibeat_timer_callback(void *param)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(xYourTaskHandle, &xHigherPriorityTaskWoken);
+    vTaskNotifyGiveFromISR(xTimerTaskHandle, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
