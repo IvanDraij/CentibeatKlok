@@ -20,7 +20,7 @@
 #define NUMBERS 10
 #define SEGMENTS 7
 #define DISPLAYS 4
-#define BRIGHTNESSDELAY 5
+#define BRIGHTNESSDELAY 10
 #define CENTIBEATTOBEAT 100
 #define TEN 10
 #define DISPLAYON 0

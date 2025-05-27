@@ -35,6 +35,9 @@ extern "C" void app_main(void)
 
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     wifi.iotroam_connect();
+
+    centibeatCount = wifi.getTime();
+    
     xMutexCentibeat = xSemaphoreCreateMutex();
 
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
