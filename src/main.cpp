@@ -40,10 +40,8 @@ SemaphoreHandle_t switchButtonSemaphore;
 extern "C" void app_main(void)
 {
     xCreatedEventGroup = xEventGroupCreate();
-
-    EventBits_t uxBits;
     
-    LCD* lcd =  new LCD();
+    LCD lcd = LCD();
 
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     wifi.iotroam_connect();
@@ -54,7 +52,7 @@ extern "C" void app_main(void)
 
     initButtonInterrupt();
     switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,&lcd,modeSwitchButtonPriority,NULL);
 
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
     xTaskCreate(vTaskDisplayCentibeat,"stepper", 2048, NULL, 3, NULL);
