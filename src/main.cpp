@@ -45,10 +45,11 @@ extern "C" void app_main(void)
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 2, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
 }
+
 static void vTaskDisplayBeat(void* pvParamters)
 {
     SegDis beatDisplay = SegDis();
-    uint32_t localCentibeat= 0;
+    uint32_t localCentibeat = 0;
     for (;;)
     {
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat
@@ -59,6 +60,7 @@ static void vTaskDisplayBeat(void* pvParamters)
         beatDisplay.displayBeat(localCentibeat);
     }
 }
+
 static void vTaskDisplayCentibeat(void* pvParameters)
 {
     Stepmotor motor = Stepmotor();
@@ -80,7 +82,7 @@ static void vTaskTimer(void* pvParamters)
 { 
     for (;;)
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // wait until timer give signal
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // wait until timer gives signal
         //run the task
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get the mutex to change centibeat
         {
