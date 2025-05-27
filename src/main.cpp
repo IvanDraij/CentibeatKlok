@@ -20,8 +20,12 @@ extern "C"
 #define hundredmsDelay 100
 
 EventGroupHandle_t xCreatedEventGroup;
+EventGroupHandle_t xKlokEventgroup;
+
 SemaphoreHandle_t xMutexCentibeat;
 TaskHandle_t xTimerTaskHandle = NULL;
+#define SYNCTIME (1 << 0)
+
 
 uint32_t centibeatCount = 0;
 
@@ -34,20 +38,22 @@ void initTasks(LCD *lcd);
 void initButtonInterrupt();
 void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
+static void vTaskSyncNTP(void* pvParameters);
+
 
 SemaphoreHandle_t switchButtonSemaphore;
 
 extern "C" void app_main(void)
 {
     xCreatedEventGroup = xEventGroupCreate();
-    
+    xKlokEventgroup = xEventGroupCreate();
+
     LCD lcd = LCD();
+    WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
 
-    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
-    wifi.iotroam_connect();
+    wifi->iotroam_connect();    
 
-    centibeatCount = wifi.getTime();
-    
+
     xMutexCentibeat = xSemaphoreCreateMutex();
 
     initButtonInterrupt();
@@ -59,6 +65,9 @@ extern "C" void app_main(void)
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 2, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
     
+    xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
+
+    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
 }
 
 static void vTaskDisplayBeat(void* pvParamters)
@@ -153,6 +162,20 @@ void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode butt
 
                 }
             }
+        }
+    }   
+}
+
+static void vTaskSyncNTP(void* pvParameters)
+{
+    WIFI* wifi = static_cast<WIFI*>(pvParameters);
+    for (;;)
+    {
+        xEventGroupWaitBits(xKlokEventgroup, SYNCTIME, pdTRUE, pdFALSE, portMAX_DELAY); // wait for flag to get time from SNTP
+        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get semaphore for protected writing
+        {
+            centibeatCount = wifi->getTime();// sync centibeat time with SNTP
+            xSemaphoreGive(xMutexCentibeat);
         }
     }
 }

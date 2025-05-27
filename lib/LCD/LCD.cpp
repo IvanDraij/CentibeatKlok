@@ -23,16 +23,27 @@ void LCD::sendComannd(uint8_t cmd)
         printStr("Connected", 1, 7); // set connected on left underside of screen IS NOG TE BEPALEN IN SCHERMONTWERPEN
         break;
     case SYNCED:
-        printStr("Synced", 0, 8); // set synced on left topsid of the screen
+        printStr("Synced", 1, 8); // set synced on left bottomside of the screen
         break;
-     case AUTOMODE:
+    case SYNCING:
+        printStr("Synching",1,8);
+        break;
+    case AUTOMODE:
         printStr("A",0,14);         // set an A in the right top corner
         break;
     case MANUAL:
         printStr("M",0,14);
         break;
+    case SYNCFAIL:
+        printStr("Sync failed",1,0);
+        break;
+    case SETTINGTIME:
+        printStr("SETTING TIME",1,0);
+        break;
+    case TIMESET:
+        printStr("TIME SET",1,0);
+        break;
     }
-    
 }
 
 void LCD::printInt(uint8_t data, uint8_t row, uint8_t col){

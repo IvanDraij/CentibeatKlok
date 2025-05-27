@@ -17,6 +17,9 @@ extern "C"
 #define SYNCING 0x04
 #define AUTOMODE 0x05
 #define MANUAL 0x06
+#define SYNCFAIL 0x07
+#define SETTINGTIME 0x08
+#define TIMESET 0x09
 
 #ifdef __cplusplus
 class LCD
