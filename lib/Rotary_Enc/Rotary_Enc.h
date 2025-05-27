@@ -14,6 +14,7 @@
 
 #define ROTARY_A_GPIO GPIO_NUM_34 // S1 (CLK) on D34
 #define ROTARY_B_GPIO GPIO_NUM_35 // S2 (DT) on D35
+extern TaskHandle_t xRotEncTaskHandle;
 
 enum RotationDirection
 {
@@ -30,7 +31,7 @@ public:
   void taskLoopRotation();
   SemaphoreHandle_t buttonSemaphore;
   int8_t stepsToTake = 0; // Amount of steps stepmotor needs to take
-  bool auto = true;
+  uint8_t automatic = 1;
 
 private:
   gpio_num_t buttonPin;

@@ -14,6 +14,7 @@ uint16_t centibeatCount = 0;
 SemaphoreHandle_t xMutexCentibeat;
 TaskHandle_t xRotEncTaskHandle = NULL;
 
+
 extern "C" void app_main(void)
 {
     LCD lcd = LCD();
@@ -40,7 +41,7 @@ static void vTaskReadRotary(void *pvParameters)
     uint32_t localCentibeat = 0;
     for (;;)
     {
-        if (!RotEnc.auto)
+        if (!RotEnc.automatic)
         {
             localCentibeat = centibeatCount;
             localCentibeat += RotEnc.stepsToTake;
