@@ -30,3 +30,21 @@ extern "C" void app_main(void)
         // vTaskDelay(200);
     }
 }
+
+static void vTaskReadRotary(void *pvParameters)
+{
+    Stepmotor motor = Stepmotor();
+    uint32_t localCentibeat = 0;
+    for (;;)
+    {
+        if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE) // when the semaphore is free update the local centibeat
+        {
+            if (localCentibeat != centibeatCount)
+            {
+                localCentibeat = centibeatCount; // change the local time to the global time
+            }
+            xSemaphoreGive(xMutexCentibeat); // free semaphore
+        }
+        motor.moveStepMotorToCentibeat(localCentibeat); // always set stepmotor to the local time
+    }
+}
