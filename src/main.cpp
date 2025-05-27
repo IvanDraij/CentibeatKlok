@@ -69,6 +69,13 @@ static void vTaskDisplayBeat(void* pvParamters)
     }
 }
 
+void initTasks(LCD *lcd) // initialises tasks
+{
+    initButtonInterrupt();
+    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
+}
+
 static void vTaskDisplayCentibeat(void* pvParameters)
 {
     Stepmotor motor = Stepmotor();
