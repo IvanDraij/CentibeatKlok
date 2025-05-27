@@ -13,7 +13,7 @@ extern "C"
 #include "iotroam.h"
 #include "esp_task_wdt.h"
 
-#define HUNDREDBEATS      10000
+#define TIMTETOSYNC      10000 // on the 100 beats
 #define modeSwitchButtonPriority 3
 #define MODE_BUTTON_GPIO GPIO_NUM_36
 #define usStackDepthModeSwitchButton 2048
@@ -34,7 +34,6 @@ static void vTaskDisplayCentibeat(void* pvParameters);
 static void vTaskTimer(void* pvParamters);
 bool automaticMode = true;
 
-void initTasks(LCD *lcd);
 void initButtonInterrupt();
 void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
@@ -111,7 +110,7 @@ static void vTaskTimer(void* pvParamters)
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get the mutex to change centibeat
         {
             centibeatCount++;
-            if (centibeatCount == HUNDREDBEATS)
+            if (centibeatCount == TIMTETOSYNC)
             {
                 xEventGroupSetBits(xKlokEventgroup, SYNCTIME);// every hundred beats sync with ntp
             }
