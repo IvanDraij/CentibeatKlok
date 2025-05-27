@@ -61,7 +61,6 @@ void initButtonInterrupt() // initialises the mode switch button interrupt
   btn_conf.intr_type = GPIO_INTR_NEGEDGE;                                       // Falling edge
   btn_conf.mode = GPIO_MODE_INPUT;                                              // Input mode
   btn_conf.pin_bit_mask = (1ULL << MODE_BUTTON_GPIO);                           // Which pins need initialising
-  btn_conf.pull_up_en = GPIO_PULLUP_ENABLE;                                     // Enable pull-up resistor
   gpio_config(&btn_conf);
 
   gpio_install_isr_service(0);                                                  // Install ISR service
