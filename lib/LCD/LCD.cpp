@@ -25,8 +25,16 @@ void LCD::sendComannd(uint8_t cmd)
     case SYNCED:
         printStr("Synced", 0, 8); // set synced on left topsid of the screen
         break;
+     case AUTOMODE:
+        printStr("A",0,14);         // set an A in the right top corner
+        break;
+    case MANUAL:
+        printStr("M",0,14);
+        break;
     }
+    
 }
+
 void LCD::printInt(uint8_t data, uint8_t row, uint8_t col){
     char izard[8];
     sprintf(izard, "%d", data);

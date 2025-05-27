@@ -43,7 +43,7 @@ extern "C" void app_main(void)
 
     EventBits_t uxBits;
     
-    LCD lcd = LCD();
+    LCD* lcd =  new LCD();
 
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     wifi.iotroam_connect();
@@ -52,10 +52,15 @@ extern "C" void app_main(void)
     
     xMutexCentibeat = xSemaphoreCreateMutex();
 
+    initButtonInterrupt();
+    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
+
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
     xTaskCreate(vTaskDisplayCentibeat,"stepper", 2048, NULL, 3, NULL);
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 2, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
+    
 }
 
 static void vTaskDisplayBeat(void* pvParamters)
@@ -71,13 +76,6 @@ static void vTaskDisplayBeat(void* pvParamters)
         } 
         beatDisplay.displayBeat(localCentibeat);
     }
-}
-
-void initTasks(LCD *lcd) // initialises tasks
-{
-    initButtonInterrupt();
-    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
 }
 
 static void vTaskDisplayCentibeat(void* pvParameters)
@@ -113,12 +111,6 @@ static void vTaskTimer(void* pvParamters)
             xSemaphoreGive(xMutexCentibeat);
         }
     }
-}
-void initTasks(LCD *lcd) // initialises tasks
-{
-    initButtonInterrupt();
-    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,lcd,modeSwitchButtonPriority,NULL);
 }
 
 void initButtonInterrupt() // initialises the mode switch button interrupt
