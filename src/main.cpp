@@ -9,6 +9,7 @@ extern "C"
 #include "LCD.h"
 #include "Stepmotor.h"
 #include "7SegDis.h"
+#include "Rotary_Enc.cpp"
 }
 #include "iotroam.h"
 #include "esp_task_wdt.h"
@@ -39,10 +40,14 @@ void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
 static void vTaskSyncNTP(void* pvParameters);
 
-
 SemaphoreHandle_t switchButtonSemaphore;
 
-extern "C" void app_main(void)
+TaskHandle_t xRotEncTaskHandle = NULL;
+Rotary_Enc *RotEnc;
+static void vTaskReadRotary(void *);
+
+extern "C" void
+app_main(void)
 {
     xCreatedEventGroup = xEventGroupCreate();
     xKlokEventgroup = xEventGroupCreate();
@@ -51,6 +56,10 @@ extern "C" void app_main(void)
     WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
 
     wifi->iotroam_connect();    
+
+    RotEnc = new Rotary_Enc();
+    xMutexCentibeat = xSemaphoreCreateMutex();
+    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 2, &xRotEncTaskHandle);
 
     xMutexCentibeat = xSemaphoreCreateMutex();
 
@@ -178,6 +187,27 @@ static void vTaskSyncNTP(void* pvParameters)
         {
             centibeatCount = wifi->getTime();// sync centibeat time with SNTP
             xSemaphoreGive(xMutexCentibeat);
+            }
+    }
+}
+
+static void vTaskReadRotary(void *pvParameters)
+{
+    uint32_t localCentibeat = 0;
+    for (;;)
+    {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        if (!RotEnc->automatic)
+        {
+            localCentibeat += RotEnc->consumeSteps();
+
+            if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
+            {
+                centibeatCount += localCentibeat;
+                ESP_LOGI("Centibeat", "Count %u", centibeatCount);
+                xSemaphoreGive(xMutexCentibeat);
+            }
+            localCentibeat = 0;
         }
     }
 }
