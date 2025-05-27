@@ -28,7 +28,7 @@ TaskHandle_t xTimerTaskHandle = NULL;
 #define SYNCTIME (1 << 0)
 
 
-uint32_t centibeatCount = 0;
+uint32_t centibeatCount = 70;
 
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
@@ -51,31 +51,32 @@ app_main(void)
 {
     xCreatedEventGroup = xEventGroupCreate();
     xKlokEventgroup = xEventGroupCreate();
+    xMutexCentibeat = xSemaphoreCreateMutex();
+    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
 
     LCD lcd = LCD();
     WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
-
-    wifi->iotroam_connect();    
-
-    RotEnc = new Rotary_Enc();
-    xMutexCentibeat = xSemaphoreCreateMutex();
-    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 2, &xRotEncTaskHandle);
-
-    xMutexCentibeat = xSemaphoreCreateMutex();
+    wifi->iotroam_connect();   
 
     initButtonInterrupt();
-    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
     xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,&lcd,modeSwitchButtonPriority,NULL);
 
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
-    xTaskCreate(vTaskDisplayCentibeat,"stepper", 2048, NULL, 3, NULL);
-    xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 2, &xTimerTaskHandle);
+
+    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 2048, NULL, 1, NULL, 1);
+
+    xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
+
+    RotEnc = new Rotary_Enc();
+    xMutexCentibeat = xSemaphoreCreateMutex();
+
+    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 1, &xRotEncTaskHandle);
     
     xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
     vTaskDelay(pdTICKS_TO_MS(10));
 
-    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+    //xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
 }
 
 static void vTaskDisplayBeat(void* pvParamters)
@@ -197,17 +198,20 @@ static void vTaskReadRotary(void *pvParameters)
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (!RotEnc->automatic)
-        {
-            localCentibeat += RotEnc->consumeSteps();
-
-            if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
+        
+            if (true)
             {
-                centibeatCount += localCentibeat;
-                ESP_LOGI("Centibeat", "Count %u", centibeatCount);
-                xSemaphoreGive(xMutexCentibeat);
+                localCentibeat += RotEnc->consumeSteps();
+
+                if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
+                {
+                    centibeatCount += localCentibeat;
+                    ESP_LOGI("Centibeat", "%lu", centibeatCount);
+                    xSemaphoreGive(xMutexCentibeat);
+                }
+                localCentibeat = 0;
             }
-            localCentibeat = 0;
-        }
+            xSemaphoreGive(switchButtonSemaphore);
+        
     }
 }
