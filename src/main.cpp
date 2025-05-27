@@ -44,6 +44,7 @@ static void vTaskReadRotary(void *pvParameters)
     uint32_t localCentibeat = 0;
     for (;;)
     {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if (!RotEnc->automatic)
         {
             localCentibeat += RotEnc->consumeSteps();
@@ -56,6 +57,5 @@ static void vTaskReadRotary(void *pvParameters)
             }
             localCentibeat = 0;
         }
-        vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
     }
 }

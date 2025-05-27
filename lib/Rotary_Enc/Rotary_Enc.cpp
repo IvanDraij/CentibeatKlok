@@ -95,13 +95,13 @@ void Rotary_Enc::taskLoopButton()
       }
       gpio_intr_enable(BUTTON_GPIO); // Enable ISR
     }
-    vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
   }
 }
 
 void Rotary_Enc::taskLoopRotation()
 {
-  RotationDirection dir; // Initialising enum
+  RotationDirection dir;                         // Initialising enum
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE; // Initialize higher priority task on false
   while (true)
   {
     if (xQueueReceive(rotationQueue, &dir, portMAX_DELAY))
@@ -122,8 +122,8 @@ void Rotary_Enc::taskLoopRotation()
       default:
         break;
       }
+      vTaskNotifyGiveFromISR(xRotEncTaskHandle, &xHigherPriorityTaskWoken); //Notify
     }
-    vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
   }
 }
 
