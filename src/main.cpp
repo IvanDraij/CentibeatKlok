@@ -46,14 +46,15 @@ static void vTaskReadRotary(void *pvParameters)
     {
         if (!RotEnc->automatic)
         {
-            localCentibeat = centibeatCount;
-            localCentibeat += RotEnc->stepsToTake;
+            localCentibeat += RotEnc->consumeSteps();
 
             if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
             {
-                centibeatCount = localCentibeat;
+                centibeatCount += localCentibeat;
+                ESP_LOGI("Centibeat", "Count %u", centibeatCount);
                 xSemaphoreGive(xMutexCentibeat);
             }
+            localCentibeat = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
     }

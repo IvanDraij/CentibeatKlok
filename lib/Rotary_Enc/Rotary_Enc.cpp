@@ -5,6 +5,13 @@ Rotary_Enc ::Rotary_Enc()
   initRotaryEnc(); // Call the initialisation
 }
 
+int8_t Rotary_Enc ::consumeSteps()
+{
+  int temp = stepsToTake;
+  stepsToTake = 0;
+  return temp;
+}
+
 void Rotary_Enc::isrHandlerButton(void *arg)
 {
   Rotary_Enc *self = static_cast<Rotary_Enc *>(arg);                       // Cast the object defined in main to the static class
