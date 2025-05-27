@@ -53,7 +53,6 @@ extern "C" void app_main(void)
 
     wifi->iotroam_connect();    
 
-
     xMutexCentibeat = xSemaphoreCreateMutex();
 
     initButtonInterrupt();
@@ -66,6 +65,7 @@ extern "C" void app_main(void)
     TIMER centibeatTimer = TIMER();
     
     xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
+    vTaskDelay(pdTICKS_TO_MS(10));
 
     xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
 }
@@ -113,7 +113,7 @@ static void vTaskTimer(void* pvParamters)
             centibeatCount++;
             if (centibeatCount == HUNDREDBEATS)
             {
-                xEventGroupSetBits(xCreatedEventGroup, (1 << 0));// every hundred beats sync with ntp
+                xEventGroupSetBits(xKlokEventgroup, SYNCTIME);// every hundred beats sync with ntp
             }
             xSemaphoreGive(xMutexCentibeat);
         }
@@ -159,7 +159,10 @@ void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode butt
                     ESP_LOGI("switchButtonPressed", "switchButton pressed");    // serial monitoring
                     automaticMode = !automaticMode;                             // flips the mode bool
                     lcd->sendComannd(automaticMode ? AUTOMODE : MANUAL);        // depending on the automaticMode bool the command will be AUTOMODE or MANUAL
-
+                    if(automaticMode)
+                    {
+                        xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+                    }
                 }
             }
         }
