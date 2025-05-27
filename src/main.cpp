@@ -3,11 +3,12 @@ extern "C"
 #include <stdio.h>
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
 #include "esp_log.h"
-
+#include "7SegDis.h"
 }
 #include "iotroam.h"
 
@@ -16,7 +17,11 @@ extern "C"
 #define usStackDepthModeSwitchButton 2048
 #define hundredmsDelay 100
 
-uint16_t centibeatCount = 0;
+SemaphoreHandle_t xMutexCentibeat;
+
+uint32_t centibeatCount = 0;
+
+static void vTaskDisplayBeat(void* pvParamters);
 
 bool automaticMode = true;
 
@@ -25,26 +30,20 @@ void initButtonInterrupt();
 void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
 
-
 SemaphoreHandle_t switchButtonSemaphore;
-
-
 
 extern "C" void app_main(void)
 {
     LCD lcd = LCD();
-    TIMER centibeatTimer = TIMER();
+    
     Stepmotor motor = Stepmotor();
     WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
     initTasks(&lcd);
-    
-    wifi.iotroam_connect();
+    xMutexCentibeat = xSemaphoreCreateMutex();
+    xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
 
-    while (true)
-    {
-        motor.moveStepMotorToCentibeat(wifi.getTime());
-        vTaskDelay(pdMS_TO_TICKS(200));
-    }
+    TIMER centibeatTimer = TIMER();
+    wifi.iotroam_connect();
 }
 
 void initTasks(LCD *lcd) // initialises tasks
@@ -97,5 +96,19 @@ void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode butt
                 }
             }
         }
+    }
+}
+static void vTaskDisplayBeat(void* pvParamters)
+{
+    SegDis beatDisplay = SegDis();
+    uint32_t localCentibeat= 0;// TEST MOET 0 ZIJN
+    for (;;)
+    {
+        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)// when the semaphore is free update the local centibeat
+        {
+            localCentibeat = centibeatCount;
+            xSemaphoreGive(xMutexCentibeat);
+        } 
+        beatDisplay.displayBeat(localCentibeat);
     }
 }
