@@ -69,7 +69,7 @@ void initButtonInterrupt() // initialises the mode switch button interrupt
   gpio_isr_handler_add(MODE_BUTTON_GPIO, vTaskModeButton, nullptr);             // calls vTaskModeButton when interrupt happens
 }
 
-void IRAM_ATTR vTaskModeButton(void *arg) // function that is called when button interrupt happens
+void vTaskModeButton(void *arg) // function that is called when button interrupt happens
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;                              // check if higher priority task is running    
     xSemaphoreGiveFromISR(switchButtonSemaphore, &xHigherPriorityTaskWoken);    // gives semaphore for switchModeButton
