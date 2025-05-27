@@ -15,7 +15,7 @@ extern "C"
 #define CONNECTED 0x02
 #define SYNCED 0x03
 #define SYNCING 0x04
-#define AUTOMODE 0x05
+#define AUTO 0x05
 #define MANUAL 0x06
 
 #ifdef __cplusplus

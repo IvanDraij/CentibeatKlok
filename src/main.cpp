@@ -8,7 +8,6 @@ extern "C"
 #include "TIMER.h"
 #include "LCD.h"
 #include "Stepmotor.h"
-#include "esp_log.h"
 #include "7SegDis.h"
 }
 #include "iotroam.h"
@@ -17,11 +16,6 @@ extern "C"
 #define HUNDREDBEATS      10000
 
 EventGroupHandle_t xCreatedEventGroup;
-#define modeSwitchButtonPriority 3
-#define MODE_BUTTON_GPIO GPIO_NUM_36
-#define usStackDepthModeSwitchButton 2048
-#define hundredmsDelay 100
-
 SemaphoreHandle_t xMutexCentibeat;
 TaskHandle_t xTimerTaskHandle = NULL;
 
@@ -30,15 +24,6 @@ uint32_t centibeatCount = 0;
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
 static void vTaskTimer(void* pvParamters);
-
-bool automaticMode = true;
-
-void initTasks(LCD *lcd);
-void initButtonInterrupt();
-void ISR_switchModeButton(void *arg);
-void vTaskLoopModeButton(void *arg);
-
-SemaphoreHandle_t switchButtonSemaphore;
 
 extern "C" void app_main(void)
 {
