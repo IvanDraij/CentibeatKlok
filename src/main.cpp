@@ -12,18 +12,20 @@ extern "C"
 
 uint16_t centibeatCount = 0;
 SemaphoreHandle_t xMutexCentibeat;
+TaskHandle_t xRotEncTaskHandle = NULL;
 
 extern "C" void app_main(void)
 {
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
+    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 2, &xRotEncTaskHandle);
 
     // iotroam_init("iotroam", "N4B4RiiNFg");
     // iotroam_connect();
 
     // WIFI wifi = WIFI();
-    Rotary_Enc rotenc = Rotary_Enc();
+    // Rotary_Enc rotenc = Rotary_Enc();
 
     while (true)
     {
@@ -38,13 +40,16 @@ static void vTaskReadRotary(void *pvParameters)
     uint32_t localCentibeat = 0;
     for (;;)
     {
-        localCentibeat = centibeatCount;
-        localCentibeat += RotEnc.stepsToTake;
+        if (!RotEnc.auto)
+        {
+            localCentibeat = centibeatCount;
+            localCentibeat += RotEnc.stepsToTake;
             // localCentibeat
             if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE) // when the semaphore is free update the local centibeat
-        {
-            centibeatCount = localCentibeat;
-            xSemaphoreGive(xMutexCentibeat); // free semaphore
+            {
+                centibeatCount = localCentibeat;
+                xSemaphoreGive(xMutexCentibeat); // free semaphore
+            }
         }
     }
 }

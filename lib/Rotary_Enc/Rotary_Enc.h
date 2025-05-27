@@ -30,6 +30,7 @@ public:
   void taskLoopRotation();
   SemaphoreHandle_t buttonSemaphore;
   int8_t stepsToTake = 0; // Amount of steps stepmotor needs to take
+  bool auto = true;
 
 private:
   gpio_num_t buttonPin;
