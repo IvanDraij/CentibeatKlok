@@ -13,13 +13,17 @@ extern "C"
 uint16_t centibeatCount = 0;
 SemaphoreHandle_t xMutexCentibeat;
 TaskHandle_t xRotEncTaskHandle = NULL;
+Rotary_Enc *RotEnc;
+static void vTaskReadRotary(void *);
 
-
-extern "C" void app_main(void)
+extern "C" void
+app_main(void)
 {
     LCD lcd = LCD();
     TIMER centibeatTimer = TIMER();
     Stepmotor motor = Stepmotor();
+    RotEnc = new Rotary_Enc();
+    xMutexCentibeat = xSemaphoreCreateMutex();
     xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 2, &xRotEncTaskHandle);
 
     // iotroam_init("iotroam", "N4B4RiiNFg");
@@ -37,20 +41,20 @@ extern "C" void app_main(void)
 
 static void vTaskReadRotary(void *pvParameters)
 {
-    Rotary_Enc RotEnc = Rotary_Enc();
     uint32_t localCentibeat = 0;
     for (;;)
     {
-        if (!RotEnc.automatic)
+        if (!RotEnc->automatic)
         {
             localCentibeat = centibeatCount;
-            localCentibeat += RotEnc.stepsToTake;
-            // localCentibeat
-            if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE) // when the semaphore is free update the local centibeat
+            localCentibeat += RotEnc->stepsToTake;
+
+            if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
             {
                 centibeatCount = localCentibeat;
-                xSemaphoreGive(xMutexCentibeat); // free semaphore
+                xSemaphoreGive(xMutexCentibeat);
             }
         }
+        vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
     }
 }

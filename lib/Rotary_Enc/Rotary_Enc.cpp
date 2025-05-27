@@ -88,6 +88,7 @@ void Rotary_Enc::taskLoopButton()
       }
       gpio_intr_enable(BUTTON_GPIO); // Enable ISR
     }
+    vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
   }
 }
 
@@ -115,6 +116,7 @@ void Rotary_Enc::taskLoopRotation()
         break;
       }
     }
+    vTaskDelay(pdMS_TO_TICKS(10)); // Delay 10 ms to yield CPU
   }
 }
 
