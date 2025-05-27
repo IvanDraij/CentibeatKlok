@@ -24,6 +24,14 @@ uint32_t centibeatCount = 0;
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
 static void vTaskTimer(void* pvParamters);
+bool automaticMode = true;
+
+void initTasks(LCD *lcd);
+void initButtonInterrupt();
+void ISR_switchModeButton(void *arg);
+void vTaskLoopModeButton(void *arg);
+
+SemaphoreHandle_t switchButtonSemaphore;
 
 extern "C" void app_main(void)
 {
