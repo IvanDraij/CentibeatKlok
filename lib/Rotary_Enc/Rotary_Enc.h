@@ -29,6 +29,7 @@ public:
   void taskLoopButton();
   void taskLoopRotation();
   SemaphoreHandle_t buttonSemaphore;
+  int8_t stepsToTake = 0; // Amount of steps stepmotor needs to take
 
 private:
   gpio_num_t buttonPin;

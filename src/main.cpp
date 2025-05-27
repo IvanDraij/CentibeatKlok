@@ -11,6 +11,7 @@ extern "C"
 #include "iotroam.h"
 
 uint16_t centibeatCount = 0;
+SemaphoreHandle_t xMutexCentibeat;
 
 extern "C" void app_main(void)
 {
@@ -33,18 +34,17 @@ extern "C" void app_main(void)
 
 static void vTaskReadRotary(void *pvParameters)
 {
-    Stepmotor motor = Stepmotor();
+    Rotary_Enc RotEnc = Rotary_Enc();
     uint32_t localCentibeat = 0;
     for (;;)
     {
-        if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE) // when the semaphore is free update the local centibeat
+        localCentibeat = centibeatCount;
+        localCentibeat += RotEnc.stepsToTake;
+            // localCentibeat
+            if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE) // when the semaphore is free update the local centibeat
         {
-            if (localCentibeat != centibeatCount)
-            {
-                localCentibeat = centibeatCount; // change the local time to the global time
-            }
+            centibeatCount = localCentibeat;
             xSemaphoreGive(xMutexCentibeat); // free semaphore
         }
-        motor.moveStepMotorToCentibeat(localCentibeat); // always set stepmotor to the local time
     }
 }

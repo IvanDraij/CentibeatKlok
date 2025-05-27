@@ -104,10 +104,12 @@ void Rotary_Enc::taskLoopRotation()
       case CLOCKWISE:
         ESP_LOGI("RotaryEncoder", "Rotated CW");
         // Put more logic here (might have to change output of function)
+        stepsToTake++;
         break;
       case COUNTERCLOCKWISE:
         ESP_LOGI("RotaryEncoder", "Rotated CCW");
         // Put more logic here (might have to change output of function)
+        stepsToTake--;
         break;
       default:
         break;
