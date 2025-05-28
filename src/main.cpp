@@ -28,7 +28,7 @@ TaskHandle_t xTimerTaskHandle = NULL;
 #define SYNCTIME (1 << 0)
 
 
-uint32_t centibeatCount = 70;
+uint32_t centibeatCount = 99900;
 
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
@@ -120,6 +120,10 @@ static void vTaskTimer(void* pvParamters)
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get the mutex to change centibeat
         {
             centibeatCount++;
+            if(centibeatCount >= 100000)
+            {
+                centibeatCount = 0;
+            }
             if (centibeatCount == TIMTETOSYNC)
             {
                 xEventGroupSetBits(xKlokEventgroup, SYNCTIME);// every hundred beats sync with ntp
@@ -199,13 +203,17 @@ static void vTaskReadRotary(void *pvParameters)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         
-            if (true)
+            if (!automaticMode)
             {
                 localCentibeat += RotEnc->consumeSteps();
 
                 if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
                 {
                     centibeatCount += localCentibeat;
+                    if (centibeatCount > 100000)
+                    {
+                        centibeatCount= 99999;
+                    }
                     ESP_LOGI("Centibeat", "%lu", centibeatCount);
                     xSemaphoreGive(xMutexCentibeat);
                 }
