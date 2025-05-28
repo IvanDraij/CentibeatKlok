@@ -20,6 +20,8 @@ extern "C"
 #define SYNCFAIL 0x07
 #define SETTINGTIME 0x08
 #define TIMESET 0x09
+#define SETTINGALARM 0x10
+#define ALARMSET 0x11
 
 #ifdef __cplusplus
 class LCD
