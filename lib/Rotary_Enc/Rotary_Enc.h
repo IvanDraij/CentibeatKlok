@@ -27,7 +27,7 @@ class Rotary_Enc
 {
 public:
   Rotary_Enc();
-  int8_t consumeSteps(); // ✅ Add this
+  int8_t consumeSteps();
   void taskLoopButton();
   void taskLoopRotation();
   SemaphoreHandle_t buttonSemaphore;
