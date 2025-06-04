@@ -22,8 +22,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
         // When station starts, attempt to connect
-        lcd_put_cursor(0, 0);
-        lcd_send_string("Connecting     ");
+        uint8_t command = CONNECTING;
+        xQueueSend(xQueueLCD, &command, portMAX_DELAY);
         esp_wifi_connect();
     }
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
@@ -125,13 +125,13 @@ void WIFI::iotroam_connect()
     // Notify user via LCD
     if (bits & WIFI_SUCCESS)
     {
-        lcd_put_cursor(0, 0);
-        lcd_send_string("Connected     ");
+        uint8_t command= CONNECTED;
+        xQueueSend(xQueueLCD, &command, portMAX_DELAY);
     }
     else
     {
-        lcd_put_cursor(0, 0);
-        lcd_send_string("Failed     ");
+        uint8_t command= FAILED;
+        xQueueSend(xQueueLCD, &command, portMAX_DELAY);
     }
 }
 

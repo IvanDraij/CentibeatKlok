@@ -17,19 +17,26 @@ void LCD::sendComannd(uint8_t cmd)
     switch (cmd)
     {
     case CONNECTING:
-        printStr("Connecting", 1, 6); // set connecting on left underside of screen
+        printStr("Connecting  ", 0, 0); // set connecting on left topside of screen
         break;
     case CONNECTED:
-        printStr("Connected", 1, 7); // set connected on left underside of screen IS NOG TE BEPALEN IN SCHERMONTWERPEN
+        printStr("Connected   ", 0, 0);
         break;
     case SYNCED:
-        printStr("Synced", 0, 8); // set synced on left topsid of the screen
+        printStr("Synced", 1, 0); // set synced on left topsid of the screen
         break;
      case AUTOMODE:
         printStr("A",0,14);         // set an A in the right top corner
         break;
     case MANUAL:
         printStr("M",0,14);
+        break;
+    case INIT:
+        printStr("Turn hand to 0", 0, 1);
+        printStr("Press to confirm", 1, 0);
+        break;
+    case FAILED:
+        printStr("Failed      ", 0, 0);
         break;
     }
     

@@ -27,7 +27,7 @@
 #define SECONDS_IN_HOUR 3600
 #define SECONDS_IN_MINUTE 60
 
-
+extern QueueHandle_t xQueueLCD;
 
 class WIFI
 {
@@ -35,7 +35,7 @@ private:
   void iotroam_init(const char *ssid, const char *password);
   void initSNTP();
   char strftime_buf[64];
-
+  
 public:
   WIFI(const char *ssid, const char *password);
   uint32_t getTime();

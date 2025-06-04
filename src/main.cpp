@@ -45,24 +45,27 @@ void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
 static void vTaskSyncNTP(void* pvParameters);
 static void vTaskReadRotary(void *);
+static void vTaskPrintLCD(void* pvParameters);
 
 extern "C" void
 app_main(void)
 {
     xCreatedEventGroup = xEventGroupCreate();
     xKlokEventgroup = xEventGroupCreate();
-    xMutexCentibeat = xSemaphoreCreateMutex();
+    xMutexCentibeat = xSemaphoreCreateMutex();                                 
     switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
     xQueueLCD = xQueueCreate(LCDQUEUELENGHT, sizeof(uint8_t));
 
-    
     Stepmotor motor = Stepmotor();
 
-    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 1, NULL);    // only initialize the taks used in the start cyclus
+    xTaskCreate(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL);    // only initialize the taks used in the start cyclus
     xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL); 
     xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 2048, &motor, 1, NULL, 1);
+    xTaskCreate(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL);
+    uint8_t command = INIT;
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
 
-    xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdTRUE, pdFALSE, portMAX_DELAY);
+    xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdFALSE, pdFALSE, portMAX_DELAY);
 
     if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)// reset variables to start klok on 0
     {
@@ -71,6 +74,9 @@ app_main(void)
         centibeatCount = 0;
         xSemaphoreGive(xMutexCentibeat);
     }
+    lcd_clear();
+    command = AUTOMODE;
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
     
     WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
     wifi->iotroam_connect();   
@@ -79,7 +85,6 @@ app_main(void)
     xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL);
 
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle);
-    TIMER centibeatTimer = TIMER();
     
     xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
     vTaskDelay(pdTICKS_TO_MS(10));
@@ -121,6 +126,7 @@ static void vTaskDisplayCentibeat(void* pvParameters)
 }
 static void vTaskTimer(void* pvParamters)
 { 
+    TIMER centibeatTimer = TIMER();
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // wait until timer gives signal
@@ -203,7 +209,6 @@ static void vTaskSyncNTP(void* pvParameters)
 }
 static void vTaskReadRotary(void *pvParameters)
 {
-    uint32_t localCentibeat = 0;
     RotationDirection dir; 
     Rotary_Enc RotEnc = Rotary_Enc();
     for (;;)

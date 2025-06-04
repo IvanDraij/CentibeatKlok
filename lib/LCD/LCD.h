@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
+
 extern "C"
 {
     #include "i2c_lcd.h"
@@ -17,6 +18,9 @@ extern "C"
 #define SYNCING 0x04
 #define AUTOMODE 0x05
 #define MANUAL 0x06
+#define INIT 0x07
+#define FAILED 0x08
+#define STARTKLOK (1<<1)
 
 #ifdef __cplusplus
 class LCD
