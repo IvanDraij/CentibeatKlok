@@ -20,6 +20,8 @@ extern "C"
 #define usStackDepthModeSwitchButton 2048
 #define hundredmsDelay 100
 #define SYNCTIME (1 << 0)
+#define MAXCENTIBEATS 99999
+#define LCDQUEUELENGHT 4
 
 EventGroupHandle_t xCreatedEventGroup;
 EventGroupHandle_t xKlokEventgroup;
@@ -28,6 +30,8 @@ SemaphoreHandle_t switchButtonSemaphore;
 SemaphoreHandle_t xMutexCentibeat;
 
 TaskHandle_t xTimerTaskHandle = NULL;
+
+QueueHandle_t xQueueLCD;
 
 bool automaticMode = false;
 
@@ -49,8 +53,9 @@ app_main(void)
     xKlokEventgroup = xEventGroupCreate();
     xMutexCentibeat = xSemaphoreCreateMutex();
     switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
+    xQueueLCD = xQueueCreate(LCDQUEUELENGHT, sizeof(uint8_t));
 
-    LCD lcd = LCD();
+    
     Stepmotor motor = Stepmotor();
 
     xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 1, NULL);    // only initialize the taks used in the start cyclus
@@ -71,7 +76,7 @@ app_main(void)
     wifi->iotroam_connect();   
 
     initButtonInterrupt();
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,&lcd,modeSwitchButtonPriority,NULL);
+    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL);
 
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
@@ -123,7 +128,7 @@ static void vTaskTimer(void* pvParamters)
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get the mutex to change centibeat
         {
             centibeatCount++;
-            if(centibeatCount >= 100000)
+            if(centibeatCount > MAXCENTIBEATS)
             {
                 centibeatCount = 0;
             }
@@ -160,9 +165,6 @@ void ISR_switchModeButton(void *arg) // function that is called when button inte
 
 void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode button semaphore
 {
-
-    LCD *lcd = static_cast<LCD*>(arg);
-
     while (true)
     {
         if (xSemaphoreTake(switchButtonSemaphore,portMAX_DELAY))                // wait for semaphore availability
@@ -174,7 +176,8 @@ void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode butt
                 {
                     ESP_LOGI("switchButtonPressed", "switchButton pressed");    // serial monitoring
                     automaticMode = !automaticMode;                             // flips the mode bool
-                    lcd->sendComannd(automaticMode ? AUTOMODE : MANUAL);        // depending on the automaticMode bool the command will be AUTOMODE or MANUAL
+                    uint8_t command = automaticMode ? AUTOMODE : MANUAL;
+                    xQueueSend(xQueueLCD, &command, portMAX_DELAY);       // depending on the automaticMode bool the command will be AUTOMODE or MANUAL
                     if(automaticMode)
                     {
                         xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
@@ -195,7 +198,7 @@ static void vTaskSyncNTP(void* pvParameters)
         {
             centibeatCount = wifi->getTime();// sync centibeat time with SNTP
             xSemaphoreGive(xMutexCentibeat);
-            }
+        }
     }
 }
 static void vTaskReadRotary(void *pvParameters)
@@ -217,7 +220,7 @@ static void vTaskReadRotary(void *pvParameters)
                             ESP_LOGI("RotaryEncoder", "Rotated CW");
                                 // Put more logic here (might have to change output of function)
                             centibeatCount++;
-                            if(centibeatCount>= 99999)// when a day is over set to zero
+                            if(centibeatCount>= MAXCENTIBEATS)// when a day is over set to zero
                             {
                                 centibeatCount = 0;
                             }
@@ -226,9 +229,9 @@ static void vTaskReadRotary(void *pvParameters)
                             ESP_LOGI("RotaryEncoder", "Rotated CCW");
                                 // Put more logic here (might have to change output of function)
                             centibeatCount--;
-                            if(centibeatCount>= 99999) // because if a unint 0-1 = max 
+                            if(centibeatCount>= MAXCENTIBEATS) // because if a unint 0-1 = max 
                             {
-                                centibeatCount = 99999;
+                                centibeatCount = MAXCENTIBEATS;
                             }
                             break;
                         default:
@@ -238,5 +241,17 @@ static void vTaskReadRotary(void *pvParameters)
                 }
             }
         }      
+    }
+}
+static void vTaskPrintLCD(void* pvParameters)
+{
+    uint8_t recieved = 0;
+    LCD lcd = LCD();
+    for(;;)
+    {
+        if(xQueueReceive(xQueueLCD, &recieved, portMAX_DELAY))
+        {
+            lcd.sendComannd(recieved);
+        }
     }
 }
