@@ -19,31 +19,27 @@ extern "C"
 #define MODE_BUTTON_GPIO GPIO_NUM_36
 #define usStackDepthModeSwitchButton 2048
 #define hundredmsDelay 100
+#define SYNCTIME (1 << 0)
 
 EventGroupHandle_t xCreatedEventGroup;
 EventGroupHandle_t xKlokEventgroup;
 
+SemaphoreHandle_t switchButtonSemaphore;
 SemaphoreHandle_t xMutexCentibeat;
+
 TaskHandle_t xTimerTaskHandle = NULL;
-#define SYNCTIME (1 << 0)
 
+bool automaticMode = false;
 
-uint32_t centibeatCount = 99900;
+uint32_t centibeatCount = 0;
 
 static void vTaskDisplayBeat(void* pvParamters);
 static void vTaskDisplayCentibeat(void* pvParameters);
 static void vTaskTimer(void* pvParamters);
-bool automaticMode = true;
-
 void initButtonInterrupt();
 void ISR_switchModeButton(void *arg);
 void vTaskLoopModeButton(void *arg);
 static void vTaskSyncNTP(void* pvParameters);
-
-SemaphoreHandle_t switchButtonSemaphore;
-
-TaskHandle_t xRotEncTaskHandle = NULL;
-Rotary_Enc *RotEnc;
 static void vTaskReadRotary(void *);
 
 extern "C" void
@@ -52,31 +48,38 @@ app_main(void)
     xCreatedEventGroup = xEventGroupCreate();
     xKlokEventgroup = xEventGroupCreate();
     xMutexCentibeat = xSemaphoreCreateMutex();
-    switchButtonSemaphore = xSemaphoreCreateBinary();                           // Create the switchButtonSemaphore
+    switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
 
     LCD lcd = LCD();
+    Stepmotor motor = Stepmotor();
+
+    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 1, NULL);    // only initialize the taks used in the start cyclus
+    xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL); 
+    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 2048, &motor, 1, NULL, 1);
+
+    xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdTRUE, pdFALSE, portMAX_DELAY);
+
+    if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)// reset variables to start klok on 0
+    {
+        automaticMode = true;
+        motor.previousClockPosVal=0;
+        centibeatCount = 0;
+        xSemaphoreGive(xMutexCentibeat);
+    }
+    
     WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
     wifi->iotroam_connect();   
 
     initButtonInterrupt();
     xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton,&lcd,modeSwitchButtonPriority,NULL);
 
-    xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL);
-
-    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 2048, NULL, 1, NULL, 1);
-
     xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle);
     TIMER centibeatTimer = TIMER();
-
-    RotEnc = new Rotary_Enc();
-    xMutexCentibeat = xSemaphoreCreateMutex();
-
-    xTaskCreate(vTaskReadRotary, "RotaryTask", 2048, NULL, 1, &xRotEncTaskHandle);
     
     xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
     vTaskDelay(pdTICKS_TO_MS(10));
 
-    //xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
 }
 
 static void vTaskDisplayBeat(void* pvParamters)
@@ -96,7 +99,7 @@ static void vTaskDisplayBeat(void* pvParamters)
 
 static void vTaskDisplayCentibeat(void* pvParameters)
 {
-    Stepmotor motor = Stepmotor();
+    Stepmotor* motor = static_cast<Stepmotor*>(pvParameters);
     uint32_t localCentibeat= 0;
     for (;;)
     {
@@ -108,7 +111,7 @@ static void vTaskDisplayCentibeat(void* pvParameters)
             }
             xSemaphoreGive(xMutexCentibeat); //free semaphore
         } 
-        motor.moveStepMotorToCentibeat(localCentibeat); //always set stepmotor to the local time
+        motor->moveStepMotorToCentibeat(localCentibeat); //always set stepmotor to the local time
     }
 }
 static void vTaskTimer(void* pvParamters)
@@ -195,31 +198,45 @@ static void vTaskSyncNTP(void* pvParameters)
             }
     }
 }
-
 static void vTaskReadRotary(void *pvParameters)
 {
     uint32_t localCentibeat = 0;
+    RotationDirection dir; 
+    Rotary_Enc RotEnc = Rotary_Enc();
     for (;;)
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        
-            if (!automaticMode)
-            {
-                localCentibeat += RotEnc->consumeSteps();
-
-                if (xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE)
-                {
-                    centibeatCount += localCentibeat;
-                    if (centibeatCount > 100000)
+        if (!automaticMode)
+        {
+            if (xQueueReceive(RotEnc.rotationQueue, &dir, portMAX_DELAY))
+            {       
+                if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE )
+                {                    // Check whether rotary encoder was turned CW or CCW
+                    switch (dir)
                     {
-                        centibeatCount= 99999;
+                        case CLOCKWISE:
+                            ESP_LOGI("RotaryEncoder", "Rotated CW");
+                                // Put more logic here (might have to change output of function)
+                            centibeatCount++;
+                            if(centibeatCount>= 99999)// when a day is over set to zero
+                            {
+                                centibeatCount = 0;
+                            }
+                            break;
+                        case COUNTERCLOCKWISE:
+                            ESP_LOGI("RotaryEncoder", "Rotated CCW");
+                                // Put more logic here (might have to change output of function)
+                            centibeatCount--;
+                            if(centibeatCount>= 99999) // because if a unint 0-1 = max 
+                            {
+                                centibeatCount = 99999;
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                    ESP_LOGI("Centibeat", "%lu", centibeatCount);
                     xSemaphoreGive(xMutexCentibeat);
                 }
-                localCentibeat = 0;
             }
-            xSemaphoreGive(switchButtonSemaphore);
-        
+        }      
     }
 }

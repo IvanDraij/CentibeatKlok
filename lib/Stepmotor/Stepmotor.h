@@ -34,12 +34,13 @@ private:
         Forward,
         Backward
     };
-    uint8_t previousClockPosVal = 0;
+    
 
 
 public:
     Stepmotor();
     void moveStepMotorToCentibeat(uint32_t);
     uint8_t rotationPerCentibeat; //Putting the variable on global to test
+    uint8_t previousClockPosVal = 0;
 };
 #endif
