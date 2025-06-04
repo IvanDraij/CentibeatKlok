@@ -23,7 +23,6 @@ extern "C"
 #define MAXCENTIBEATS 99999
 #define LCDQUEUELENGHT 4
 
-EventGroupHandle_t xCreatedEventGroup;
 EventGroupHandle_t xKlokEventgroup;
 
 SemaphoreHandle_t switchButtonSemaphore;
@@ -50,7 +49,6 @@ static void vTaskPrintLCD(void* pvParameters);
 extern "C" void
 app_main(void)
 {
-    xCreatedEventGroup = xEventGroupCreate();
     xKlokEventgroup = xEventGroupCreate();
     xMutexCentibeat = xSemaphoreCreateMutex();                                 
     switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
