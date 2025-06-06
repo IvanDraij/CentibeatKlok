@@ -22,6 +22,7 @@ extern "C"
 #define SYNCTIME (1 << 0)
 #define MAXCENTIBEATS 99999
 #define LCDQUEUELENGHT 4
+#define ONESTEP 1
 
 EventGroupHandle_t xKlokEventgroup;
 
@@ -29,10 +30,11 @@ SemaphoreHandle_t switchButtonSemaphore;
 SemaphoreHandle_t xMutexCentibeat;
 
 TaskHandle_t xTimerTaskHandle = NULL;
+TaskHandle_t xHandleInit = NULL;
 
 QueueHandle_t xQueueLCD;
 
-bool automaticMode = false;
+bool automaticMode = true;
 
 uint32_t centibeatCount = 0;
 
@@ -45,51 +47,42 @@ void vTaskLoopModeButton(void *arg);
 static void vTaskSyncNTP(void* pvParameters);
 static void vTaskReadRotary(void *);
 static void vTaskPrintLCD(void* pvParameters);
+static void vTaskInitKlok(void* pvParameters);
 
 extern "C" void
 app_main(void)
 {
     xKlokEventgroup = xEventGroupCreate();
-    xMutexCentibeat = xSemaphoreCreateMutex();                                 
-    switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
     xQueueLCD = xQueueCreate(LCDQUEUELENGHT, sizeof(uint8_t));
 
-    Stepmotor motor = Stepmotor();
-
-    xTaskCreate(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL);    // only initialize the taks used in the start cyclus
-    xTaskCreate(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL); 
-    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 2048, &motor, 1, NULL, 1);
-    xTaskCreate(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL);
-    uint8_t command = INIT;
-    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
+    xTaskCreate(vTaskInitKlok, "initialisation", 4096, NULL, 1, &xHandleInit);
+    xTaskCreatePinnedToCore(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL, 0);
 
     xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdFALSE, pdFALSE, portMAX_DELAY);
+    vTaskDelete(xHandleInit);
 
-    if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE)// reset variables to start klok on 0
-    {
-        automaticMode = true;
-        motor.previousClockPosVal=0;
-        centibeatCount = 0;
-        xSemaphoreGive(xMutexCentibeat);
-    }
-    lcd_clear();
-    command = AUTOMODE;
+    xMutexCentibeat = xSemaphoreCreateMutex();                                 
+    switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
+
+    uint8_t command = CLEAR;
     xQueueSend(xQueueLCD, &command, portMAX_DELAY);
     
-    WIFI* wifi = new WIFI("iotroam", "N4B4RiiNFg");
-    wifi->iotroam_connect();   
+    command = AUTOMODE;
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
+
+    xTaskCreatePinnedToCore(vTaskSyncNTP,"NTPSync", 4096, NULL, 1, NULL, 0);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+
+    xTaskCreatePinnedToCore(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle, 0);
 
     initButtonInterrupt();
-    xTaskCreate(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL);
-
-    xTaskCreate(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle);
+    xTaskCreatePinnedToCore(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL, 0);
     
-    xTaskCreate(vTaskSyncNTP,"NTPSync", 2048,(void*)wifi, 1, NULL);
-    vTaskDelay(pdTICKS_TO_MS(10));
-
-    xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+    xTaskCreatePinnedToCore(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL,0); 
+    xTaskCreatePinnedToCore(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL,0);    // only initialize the taks used in the start cyclus
+    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 4096, NULL, 1, NULL, 1);
 }
-
 static void vTaskDisplayBeat(void* pvParamters)
 {
     SegDis beatDisplay = SegDis();
@@ -107,7 +100,7 @@ static void vTaskDisplayBeat(void* pvParamters)
 
 static void vTaskDisplayCentibeat(void* pvParameters)
 {
-    Stepmotor* motor = static_cast<Stepmotor*>(pvParameters);
+    Stepmotor motor = Stepmotor();
     uint32_t localCentibeat= 0;
     for (;;)
     {
@@ -119,7 +112,7 @@ static void vTaskDisplayCentibeat(void* pvParameters)
             }
             xSemaphoreGive(xMutexCentibeat); //free semaphore
         } 
-        motor->moveStepMotorToCentibeat(localCentibeat); //always set stepmotor to the local time
+        motor.moveStepMotorToCentibeat(localCentibeat); //always set stepmotor to the local time
     }
 }
 static void vTaskTimer(void* pvParamters)
@@ -194,13 +187,14 @@ void vTaskLoopModeButton(void *arg) // loop funtion waiting for switch mode butt
 
 static void vTaskSyncNTP(void* pvParameters)
 {
-    WIFI* wifi = static_cast<WIFI*>(pvParameters);
+    WIFI wifi = WIFI("iotroam", "N4B4RiiNFg");
+    wifi.iotroam_connect(); 
     for (;;)
     {
         xEventGroupWaitBits(xKlokEventgroup, SYNCTIME, pdTRUE, pdFALSE, portMAX_DELAY); // wait for flag to get time from SNTP
         if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get semaphore for protected writing
         {
-            centibeatCount = wifi->getTime();// sync centibeat time with SNTP
+            centibeatCount = wifi.getTime();// sync centibeat time with SNTP
             xSemaphoreGive(xMutexCentibeat);
         }
     }
@@ -255,6 +249,39 @@ static void vTaskPrintLCD(void* pvParameters)
         if(xQueueReceive(xQueueLCD, &recieved, portMAX_DELAY))
         {
             lcd.sendComannd(recieved);
+        }
+    }
+}
+static void vTaskInitKlok(void* pvParameters)
+{
+    Stepmotor centi = Stepmotor(); // initialise stepmotor to use within initialisation phase
+
+    uint8_t command = INIT;
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY); // send the init command to the display
+
+    SegDis beat = SegDis();
+    beat.displayBeat(0); // Turn on the display on 0
+
+    Rotary_Enc rotEnc = Rotary_Enc(); // use the rotary encoder to turn the stepmotor
+    RotationDirection dir; 
+    motorRotation rotation = Idle; //to prevent the motor from starting
+    
+    for(;;)
+    {
+        if(xQueueReceive(rotEnc.rotationQueue, &dir, portMAX_DELAY)) // read queue
+        {
+            switch (dir)
+                    {
+                        case CLOCKWISE:
+                            rotation = Forward; // when turning clock wise set rotation to Forward
+                            break;
+                        case COUNTERCLOCKWISE:
+                            rotation = Backward; // when turning counterclock wise set rotation to Backwards
+                            break;
+                        default:
+                            break;
+            }
+            centi.moveStepMotor(ONESTEP, rotation);// Set the step in the chosen rotation
         }
     }
 }

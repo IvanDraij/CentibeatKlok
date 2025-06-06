@@ -20,6 +20,7 @@ extern "C"
 #define MANUAL 0x06
 #define INIT 0x07
 #define FAILED 0x08
+#define CLEAR 0x09
 #define STARTKLOK (1<<1)
 
 #ifdef __cplusplus
@@ -29,7 +30,7 @@ class LCD
         LCD(); //constructor
         void printStr(char str[], uint8_t row, uint8_t col); 
         void sendComannd(uint8_t cmd);
-        void printInt(uint8_t data, uint8_t row, uint8_t col);
+        void printInt(uint32_t data, uint8_t row, uint8_t col);
     protected:
 
     private:

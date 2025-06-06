@@ -11,7 +11,7 @@
 #define IN3 GPIO_NUM_17
 #define IN4 GPIO_NUM_16
 
-#define STEP_DELAY_MS 7
+#define STEP_DELAY_MS 12
 //360 degrees is 4096 steps, 1 centibeat is 100th of 360 degrees. 4096/100 = 40.96. Rounded it's 41.
 #define AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT 41
 #define AMOUNT_OF_STEPS 8 //For half step mode
@@ -21,6 +21,13 @@
 #define STEPREDUCTION 8 //Since 41 is rounded up by 0.04. Each 25 steps, 1 step (8 inner steps) need to be reducted so the clock is accurate. Since 25*0.04 = 1.
 #define ONEDAY 100000
 
+enum motorRotation
+    {
+        Forward,
+        Backward,
+        Idle
+    };
+
 class Stepmotor
 {
 private:
@@ -28,12 +35,7 @@ private:
     uint32_t totalStepsTakenInADay;
     uint8_t calculateSteps(uint32_t);
     void initStepmotor();
-    void moveStepMotor(uint8_t, uint8_t);
-    enum motorRotation
-    {
-        Forward,
-        Backward
-    };
+    
     
 
 
@@ -42,5 +44,7 @@ public:
     void moveStepMotorToCentibeat(uint32_t);
     uint8_t rotationPerCentibeat; //Putting the variable on global to test
     uint8_t previousClockPosVal = 0;
+    void moveStepMotor(uint8_t, uint8_t);
+    
 };
 #endif

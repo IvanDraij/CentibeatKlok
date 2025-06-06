@@ -38,13 +38,16 @@ void LCD::sendComannd(uint8_t cmd)
     case FAILED:
         printStr("Failed      ", 0, 0);
         break;
+    case CLEAR:
+        lcd_clear();
+        break;
     }
     
 }
 
-void LCD::printInt(uint8_t data, uint8_t row, uint8_t col){
+void LCD::printInt(uint32_t data, uint8_t row, uint8_t col){
     char izard[8];
-    sprintf(izard, "%d", data);
+    sprintf(izard, "%lu", data);
     printStr(izard, row, col);
 }
 // het uitwerken van verschillende senarios
