@@ -29,17 +29,17 @@ void LCD::sendComannd(uint8_t cmd)
         printStr("A",0,14);         // set an A in the right top corner
         break;
     case MANUAL:
-        printStr("M",0,14);
+        printStr("M",0,14);// set an M in the right top corner
         break;
     case INIT:
-        printStr("Turn hand to 0", 0, 1);
+        printStr("Turn hand to 0", 0, 1);// set the text on the whole display
         printStr("Press to confirm", 1, 0);
         break;
     case FAILED:
-        printStr("Failed      ", 0, 0);
+        printStr("Failed      ", 0, 0); // put failed and erase leftover letters
         break;
     case CLEAR:
-        lcd_clear();
+        lcd_clear(); // clear display
         break;
     }
     
@@ -47,7 +47,7 @@ void LCD::sendComannd(uint8_t cmd)
 
 void LCD::printInt(uint32_t data, uint8_t row, uint8_t col){
     char izard[8];
-    sprintf(izard, "%lu", data);
+    sprintf(izard, "%lu", data);// debug code to set centibeat count on display
     printStr(izard, row, col);
 }
 // het uitwerken van verschillende senarios

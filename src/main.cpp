@@ -55,33 +55,33 @@ app_main(void)
     xKlokEventgroup = xEventGroupCreate();
     xQueueLCD = xQueueCreate(LCDQUEUELENGHT, sizeof(uint8_t));
 
-    xTaskCreate(vTaskInitKlok, "initialisation", 4096, NULL, 1, &xHandleInit);
-    xTaskCreatePinnedToCore(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL, 0);
+    xTaskCreate(vTaskInitKlok, "initialisation", 4096, NULL, 1, &xHandleInit);          // task for only the init of the clock
+    xTaskCreatePinnedToCore(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL, 0);  // create task lcd for handling lcd queue
 
-    xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdFALSE, pdFALSE, portMAX_DELAY);
-    vTaskDelete(xHandleInit);
+    xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdFALSE, pdFALSE, portMAX_DELAY); // when the rotary button is pressed
+    vTaskDelete(xHandleInit); // delete the init task
 
-    xMutexCentibeat = xSemaphoreCreateMutex();                                 
+    xMutexCentibeat = xSemaphoreCreateMutex();           //   mutex for safe reading and writing the CentibeatCount                      
     switchButtonSemaphore = xSemaphoreCreateBinary();                         // Create the switchButtonSemaphore
 
     uint8_t command = CLEAR;
-    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY); // clear the LCD
     
     command = AUTOMODE;
-    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY); // send the mode of the clock
 
-    xTaskCreatePinnedToCore(vTaskSyncNTP,"NTPSync", 4096, NULL, 1, NULL, 0);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    xTaskCreatePinnedToCore(vTaskSyncNTP,"NTPSync", 4096, NULL, 1, NULL, 0); // start the wifi and sync the wifi as soon as possible
     xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-    xTaskCreatePinnedToCore(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle, 0);
+    xTaskCreatePinnedToCore(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle, 0); //start the timer
 
     initButtonInterrupt();
-    xTaskCreatePinnedToCore(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL, 0);
+    xTaskCreatePinnedToCore(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL, 0); // initialize en start the button
     
-    xTaskCreatePinnedToCore(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL,0); 
-    xTaskCreatePinnedToCore(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL,0);    // only initialize the taks used in the start cyclus
-    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 4096, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL,0); // initialise and start the 7SegDisplay
+    xTaskCreatePinnedToCore(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL,0);// initialise and use the rotary encoder
+    xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 4096, NULL, 1, NULL, 1);// initialise and use the steppermotor. set to its own core because the time intesive task
 }
 static void vTaskDisplayBeat(void* pvParamters)
 {
@@ -94,7 +94,7 @@ static void vTaskDisplayBeat(void* pvParamters)
             localCentibeat = centibeatCount;
             xSemaphoreGive(xMutexCentibeat);
         } 
-        beatDisplay.displayBeat(localCentibeat);
+        beatDisplay.displayBeat(localCentibeat); // always display the beat
     }
 }
 
@@ -205,17 +205,16 @@ static void vTaskReadRotary(void *pvParameters)
     Rotary_Enc RotEnc = Rotary_Enc();
     for (;;)
     {
-        if (!automaticMode)
+        if (!automaticMode) // only in manual mode
         {
-            if (xQueueReceive(RotEnc.rotationQueue, &dir, portMAX_DELAY))
+            if (xQueueReceive(RotEnc.rotationQueue, &dir, portMAX_DELAY)) // when there is a rotation in the queue
             {       
-                if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE )
-                {                    // Check whether rotary encoder was turned CW or CCW
-                    switch (dir)
+                if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE ) // when the semaphore is available
+                {                    
+                    switch (dir)         // Check whether rotary encoder was turned CW or CCW
                     {
                         case CLOCKWISE:
                             ESP_LOGI("RotaryEncoder", "Rotated CW");
-                                // Put more logic here (might have to change output of function)
                             centibeatCount++;
                             if(centibeatCount>= MAXCENTIBEATS)// when a day is over set to zero
                             {
@@ -224,7 +223,6 @@ static void vTaskReadRotary(void *pvParameters)
                             break;
                         case COUNTERCLOCKWISE:
                             ESP_LOGI("RotaryEncoder", "Rotated CCW");
-                                // Put more logic here (might have to change output of function)
                             centibeatCount--;
                             if(centibeatCount>= MAXCENTIBEATS) // because if a unint 0-1 = max 
                             {
@@ -243,12 +241,12 @@ static void vTaskReadRotary(void *pvParameters)
 static void vTaskPrintLCD(void* pvParameters)
 {
     uint8_t recieved = 0;
-    LCD lcd = LCD();
+    LCD lcd = LCD(); //init LCD to use only in this task
     for(;;)
     {
-        if(xQueueReceive(xQueueLCD, &recieved, portMAX_DELAY))
+        if(xQueueReceive(xQueueLCD, &recieved, portMAX_DELAY)) // when a command is in the queue
         {
-            lcd.sendComannd(recieved);
+            lcd.sendComannd(recieved); // send command into the LCD
         }
     }
 }

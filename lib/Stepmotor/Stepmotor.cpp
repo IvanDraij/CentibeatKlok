@@ -30,6 +30,7 @@ uint8_t step_sequence_backward[AMOUNT_OF_STEPS][AMOUNT_OF_COILS] = {
 
 uint32_t totalStepsTakenInADay = 0;
 uint8_t rotationPerCentibeat;
+bool stepreduction;
 
 uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 {
@@ -38,6 +39,10 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 
   // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
   uint8_t newClockPosVal = centibeat % MAXSTEPS;
+  if(newClockPosVal==0)
+  {
+    stepreduction = true;
+  }
 
   // To determine howmany steps must be taken, subtract the last value from the current value.
   int8_t numberOfSteps = newClockPosVal - previousClockPosVal;
@@ -65,6 +70,15 @@ void Stepmotor::moveStepMotor(uint8_t numberOfSteps, uint8_t motorRotation)
   else
   {
     step_sequence = step_sequence_backward;
+  }
+  if(stepreduction)
+  {
+      rotationPerCentibeat= AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT - ROTAIONREDUCTION;
+      stepreduction = false;
+  }
+  else
+  {
+      rotationPerCentibeat= AMOUNT_OF_INNER_ROTATION_PER_CENTIBEAT;
   }
 
   static int sequenceIndex = 0; // Index to keep track of what the last step in the sequence was
