@@ -120,7 +120,7 @@ void WIFI::iotroam_connect()
                                            pdFALSE,
                                            portMAX_DELAY);
 
-    vEventGroupDelete(wifi_event_group); // Clean up after waiting
+    //vEventGroupDelete(wifi_event_group); // Clean up after waiting
 
     // Notify user via LCD
     if (bits & WIFI_SUCCESS)
@@ -149,6 +149,11 @@ uint32_t WIFI ::getTime()
     struct tm timeinfo = {0, 0, 0, 0, 0, 0, 0, 0, 0}; // Putting the whole struct on 0 to counteract warnings
     uint8_t retry = 0;
 
+    if (xEventGroupGetBits(wifi_event_group) & WIFI_FAILURE)
+    {
+        retry = MAX_FAILURES;
+    }
+
     // Comparing tm_year to 2025-1900 since tm_year starts counting the years since 1900
     while ((timeinfo.tm_year < CURRENTYEAR) && (retry < MAX_FAILURES)) // Trying to fetch time for 10 times
     {
@@ -165,7 +170,7 @@ uint32_t WIFI ::getTime()
     if (retry == MAX_FAILURES) // If the time isn't fetched properly log the raw time (only for debugging purposes)
     {
         ESP_LOGI(SNTP, "Raw time: %" PRIu64, (uint64_t)now);
-        uint8_t command= FAILED;
+        uint8_t command= SYNCFAIL;
         xQueueSend(xQueueLCD, &command, portMAX_DELAY);
         return 1;
     }
