@@ -22,6 +22,7 @@ extern "C"
 #define FAILED 0x08
 #define CLEAR 0x09
 #define STARTKLOK (1<<1)
+#define SYNCFAIL 0x0A
 
 #ifdef __cplusplus
 class LCD

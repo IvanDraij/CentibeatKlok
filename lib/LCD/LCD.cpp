@@ -23,7 +23,7 @@ void LCD::sendComannd(uint8_t cmd)
         printStr("Connected   ", 0, 0);
         break;
     case SYNCED:
-        printStr("Synced", 1, 0); // set synced on left topsid of the screen
+        printStr("Sync time done", 1, 0); // set synced on left topsid of the screen
         break;
      case AUTOMODE:
         printStr("A",0,14);         // set an A in the right top corner
@@ -36,10 +36,16 @@ void LCD::sendComannd(uint8_t cmd)
         printStr("Press to confirm", 1, 0);
         break;
     case FAILED:
-        printStr("Failed      ", 0, 0); // put failed and erase leftover letters
+        printStr("Failed      ", 0 ,0); // put failed and erase leftover letters
         break;
     case CLEAR:
         lcd_clear(); // clear display
+        break;
+    case SYNCFAIL:
+        printStr("Sync time fail", 1,0);
+        break;
+    case SYNCING:
+        printStr("Syncing       ", 1, 0);
         break;
     }
     

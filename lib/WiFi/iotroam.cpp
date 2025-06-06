@@ -157,15 +157,21 @@ uint32_t WIFI ::getTime()
         gmtime_r(&now, &timeinfo);           // Transforming the input to YY:MM:DD:HH:MM:SS in UTC
         timeinfo.tm_hour += CEST_CORRECTION; // Adding 2 hrs to transform UTC to CEST
         ESP_LOGI(SNTP, "Waiting... %s", asctime(&timeinfo));
+        uint8_t command= SYNCING;
+        xQueueSend(xQueueLCD, &command, portMAX_DELAY);
         vTaskDelay(TWOSECONDS);
     }
 
     if (retry == MAX_FAILURES) // If the time isn't fetched properly log the raw time (only for debugging purposes)
     {
         ESP_LOGI(SNTP, "Raw time: %" PRIu64, (uint64_t)now);
+        uint8_t command= FAILED;
+        xQueueSend(xQueueLCD, &command, portMAX_DELAY);
         return 1;
     }
 
+    uint8_t command= SYNCED;
+    xQueueSend(xQueueLCD, &command, portMAX_DELAY);
     // Calculate seconds since midnight
     uint32_t seconds_since_midnight = timeinfo.tm_hour * SECONDS_IN_HOUR +
                                       timeinfo.tm_min * SECONDS_IN_MINUTE +
