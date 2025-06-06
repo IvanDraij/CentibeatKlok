@@ -39,9 +39,10 @@ uint8_t Stepmotor ::calculateSteps(uint32_t centibeat)
 
   // Calculate the right position of the clock by taking the total amount of centibeats and doing modulo 100 to only get the numbers below 100.
   uint8_t newClockPosVal = centibeat % MAXSTEPS;
+  // if the new clock val is 0 so the 
   if(newClockPosVal==0)
   {
-    stepreduction = true;
+    stepreduction = true; // 
   }
 
   // To determine howmany steps must be taken, subtract the last value from the current value.

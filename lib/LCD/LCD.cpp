@@ -50,7 +50,3 @@ void LCD::printInt(uint32_t data, uint8_t row, uint8_t col){
     sprintf(izard, "%lu", data);// debug code to set centibeat count on display
     printStr(izard, row, col);
 }
-// het uitwerken van verschillende senarios
-// zoals het verbinden
-// het synchroniseren
-// verwisselen van modus

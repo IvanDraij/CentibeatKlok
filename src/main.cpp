@@ -54,9 +54,10 @@ app_main(void)
 {
     xKlokEventgroup = xEventGroupCreate();
     xQueueLCD = xQueueCreate(LCDQUEUELENGHT, sizeof(uint8_t));
+    Rotary_Enc *rotEnc = new Rotary_Enc(); // use the rotary encoder to turn the stepmotor
 
-    xTaskCreate(vTaskInitKlok, "initialisation", 4096, NULL, 1, &xHandleInit);          // task for only the init of the clock
-    xTaskCreatePinnedToCore(vTaskPrintLCD, "lcdHandle", 2048, NULL, 1, NULL, 0);  // create task lcd for handling lcd queue
+    xTaskCreate(vTaskInitKlok, "initialisation", 4096, rotEnc, 1, &xHandleInit);          // task for only the init of the clock
+    xTaskCreatePinnedToCore(vTaskPrintLCD, "lcdHandle", 4096, NULL, 1, NULL, 0);  // create task lcd for handling lcd queue
 
     xEventGroupWaitBits(xKlokEventgroup, STARTKLOK, pdFALSE, pdFALSE, portMAX_DELAY); // when the rotary button is pressed
     vTaskDelete(xHandleInit); // delete the init task
@@ -74,13 +75,13 @@ app_main(void)
     xEventGroupSetBits(xKlokEventgroup, SYNCTIME);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    xTaskCreatePinnedToCore(vTaskTimer, "TimingTask", 2048, NULL, 1, &xTimerTaskHandle, 0); //start the timer
+    xTaskCreatePinnedToCore(vTaskTimer, "TimingTask", 4096, NULL, 1, &xTimerTaskHandle, 0); //start the timer
 
     initButtonInterrupt();
     xTaskCreatePinnedToCore(vTaskLoopModeButton,"changeModeButton",usStackDepthModeSwitchButton, NULL, modeSwitchButtonPriority, NULL, 0); // initialize en start the button
     
-    xTaskCreatePinnedToCore(vTaskDisplayBeat,"7SegDis", 2048, NULL, 1, NULL,0); // initialise and start the 7SegDisplay
-    xTaskCreatePinnedToCore(vTaskReadRotary, "RotaryTask", 4096, NULL, 1, NULL,0);// initialise and use the rotary encoder
+    xTaskCreatePinnedToCore(vTaskDisplayBeat,"7SegDis", 4096, NULL, 1, NULL,0); // initialise and start the 7SegDisplay
+    xTaskCreatePinnedToCore(vTaskReadRotary, "RotaryTask", 4096, rotEnc, 1, NULL,0);// initialise and use the rotary encoder
     xTaskCreatePinnedToCore(vTaskDisplayCentibeat,"stepper", 4096, NULL, 1, NULL, 1);// initialise and use the steppermotor. set to its own core because the time intesive task
 }
 static void vTaskDisplayBeat(void* pvParamters)
@@ -202,12 +203,12 @@ static void vTaskSyncNTP(void* pvParameters)
 static void vTaskReadRotary(void *pvParameters)
 {
     RotationDirection dir; 
-    Rotary_Enc RotEnc = Rotary_Enc();
+    Rotary_Enc* enc = static_cast<Rotary_Enc*>(pvParameters);
     for (;;)
     {
         if (!automaticMode) // only in manual mode
         {
-            if (xQueueReceive(RotEnc.rotationQueue, &dir, portMAX_DELAY)) // when there is a rotation in the queue
+            if (xQueueReceive(enc->rotationQueue, &dir, portMAX_DELAY)) // when there is a rotation in the queue
             {       
                 if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY) == pdTRUE ) // when the semaphore is available
                 {                    
@@ -260,13 +261,13 @@ static void vTaskInitKlok(void* pvParameters)
     SegDis beat = SegDis();
     beat.displayBeat(0); // Turn on the display on 0
 
-    Rotary_Enc rotEnc = Rotary_Enc(); // use the rotary encoder to turn the stepmotor
+    Rotary_Enc* enc = static_cast<Rotary_Enc*>(pvParameters);
     RotationDirection dir; 
     motorRotation rotation = Idle; //to prevent the motor from starting
     
     for(;;)
     {
-        if(xQueueReceive(rotEnc.rotationQueue, &dir, portMAX_DELAY)) // read queue
+        if(xQueueReceive(enc->rotationQueue, &dir, portMAX_DELAY)) // read queue
         {
             switch (dir)
                     {
