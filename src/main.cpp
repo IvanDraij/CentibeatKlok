@@ -192,11 +192,14 @@ static void vTaskSyncNTP(void* pvParameters)
     wifi.iotroam_connect(); 
     for (;;)
     {
-        xEventGroupWaitBits(xKlokEventgroup, SYNCTIME, pdTRUE, pdFALSE, portMAX_DELAY); // wait for flag to get time from SNTP
-        if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get semaphore for protected writing
+        if (!automaticMode) // only in manual mode
         {
-            centibeatCount = wifi.getTime();// sync centibeat time with SNTP
-            xSemaphoreGive(xMutexCentibeat);
+            xEventGroupWaitBits(xKlokEventgroup, SYNCTIME, pdTRUE, pdFALSE, portMAX_DELAY); // wait for flag to get time from SNTP
+            if(xSemaphoreTake(xMutexCentibeat, portMAX_DELAY)== pdTRUE) //get semaphore for protected writing
+            {
+                centibeatCount = wifi.getTime();// sync centibeat time with SNTP
+                xSemaphoreGive(xMutexCentibeat);
+            }
         }
     }
 }
@@ -206,7 +209,7 @@ static void vTaskReadRotary(void *pvParameters)
     Rotary_Enc* enc = static_cast<Rotary_Enc*>(pvParameters);
     for (;;)
     {
-        if (!automaticMode) // only in manual mode
+        if (automaticMode) // only in automatic mode
         {
             if (xQueueReceive(enc->rotationQueue, &dir, portMAX_DELAY)) // when there is a rotation in the queue
             {       
