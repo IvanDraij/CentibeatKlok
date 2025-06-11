@@ -7,7 +7,6 @@
 #include "freertos/semphr.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
-#include "esp_timer.h"
 
 #define BUTTON_GPIO GPIO_NUM_39 // VN pin
 #define FIFTYMS (pdMS_TO_TICKS(50))
