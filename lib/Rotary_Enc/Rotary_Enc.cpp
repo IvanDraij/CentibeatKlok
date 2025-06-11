@@ -75,11 +75,6 @@ void Rotary_Enc ::taskEntryPointButton(void *arg) // Function to initialise the 
   static_cast<Rotary_Enc *>(arg)->taskLoopButton(); // Cast the Object made in main to the static class and run taskLoop within that task
 }
 
-void Rotary_Enc::taskEntryPointRotation(void *arg) // Function to initialise the loop function for RTOS
-{
-  static_cast<Rotary_Enc *>(arg)->taskLoopRotation(); // Cast the Object made in main to the static class and run taskLoop within that task
-}
-
 void Rotary_Enc::taskLoopButton()
 {
   while (true)
@@ -91,38 +86,9 @@ void Rotary_Enc::taskLoopButton()
       if (gpio_get_level(BUTTON_GPIO) == 0)
       {
         ESP_LOGI("RotaryEncoderButton", "Button pressed");
-        // Add RTOS semaphore here
+        xEventGroupSetBits(xKlokEventgroup, STARTKLOK);
       }
       gpio_intr_enable(BUTTON_GPIO); // Enable ISR
-    }
-  }
-}
-
-void Rotary_Enc::taskLoopRotation()
-{
-  RotationDirection dir;                         // Initialising enum
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE; // Initialize higher priority task on false
-  while (true)
-  {
-    if (xQueueReceive(rotationQueue, &dir, portMAX_DELAY))
-    {
-      // Check whether rotary encoder was turned CW or CCW
-      switch (dir)
-      {
-      case CLOCKWISE:
-        ESP_LOGI("RotaryEncoder", "Rotated CW");
-        // Put more logic here (might have to change output of function)
-        stepsToTake++;
-        break;
-      case COUNTERCLOCKWISE:
-        ESP_LOGI("RotaryEncoder", "Rotated CCW");
-        // Put more logic here (might have to change output of function)
-        stepsToTake--;
-        break;
-      default:
-        break;
-      }
-      vTaskNotifyGiveFromISR(xRotEncTaskHandle, &xHigherPriorityTaskWoken); //Notify
     }
   }
 }
@@ -155,5 +121,4 @@ void Rotary_Enc ::initRotaryEnc()
   gpio_isr_handler_add(ROTARY_B_GPIO, isrHandlerRotation, (void *)this); // Register ISR handler for rotary B
 
   xTaskCreate(taskEntryPointButton, "RotaryBtnTask", 2048, this, 10, NULL);   // Create RTOS task for button
-  xTaskCreate(taskEntryPointRotation, "RotaryRotTask", 2048, this, 10, NULL); // Create RTOS task for rotary
 }

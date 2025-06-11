@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
+
 extern "C"
 {
     #include "i2c_lcd.h"
@@ -17,6 +18,11 @@ extern "C"
 #define SYNCING 0x04
 #define AUTOMODE 0x05
 #define MANUAL 0x06
+#define INIT 0x07
+#define FAILED 0x08
+#define CLEAR 0x09
+#define STARTKLOK (1<<1)
+#define SYNCFAIL 0x0A
 
 #ifdef __cplusplus
 class LCD
@@ -25,7 +31,7 @@ class LCD
         LCD(); //constructor
         void printStr(char str[], uint8_t row, uint8_t col); 
         void sendComannd(uint8_t cmd);
-        void printInt(uint8_t data, uint8_t row, uint8_t col);
+        void printInt(uint32_t data, uint8_t row, uint8_t col);
     protected:
 
     private:

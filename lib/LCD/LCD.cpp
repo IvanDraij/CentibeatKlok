@@ -17,30 +17,42 @@ void LCD::sendComannd(uint8_t cmd)
     switch (cmd)
     {
     case CONNECTING:
-        printStr("Connecting", 1, 6); // set connecting on left underside of screen
+        printStr("Connecting  ", 0, 0); // set connecting on left topside of screen
         break;
     case CONNECTED:
-        printStr("Connected", 1, 7); // set connected on left underside of screen IS NOG TE BEPALEN IN SCHERMONTWERPEN
+        printStr("Connected   ", 0, 0);
         break;
     case SYNCED:
-        printStr("Synced", 0, 8); // set synced on left topsid of the screen
+        printStr("Sync time done", 1, 0); // set synced on left topsid of the screen
         break;
      case AUTOMODE:
         printStr("A",0,14);         // set an A in the right top corner
         break;
     case MANUAL:
-        printStr("M",0,14);
+        printStr("M",0,14);// set an M in the right top corner
+        break;
+    case INIT:
+        printStr("Turn hand to 0", 0, 1);// set the text on the whole display
+        printStr("Press to confirm", 1, 0);
+        break;
+    case FAILED:
+        printStr("Failed      ", 0 ,0); // put failed and erase leftover letters
+        break;
+    case CLEAR:
+        lcd_clear(); // clear display
+        break;
+    case SYNCFAIL:
+        printStr("Sync time fail", 1,0);
+        break;
+    case SYNCING:
+        printStr("Syncing       ", 1, 0);
         break;
     }
     
 }
 
-void LCD::printInt(uint8_t data, uint8_t row, uint8_t col){
+void LCD::printInt(uint32_t data, uint8_t row, uint8_t col){
     char izard[8];
-    sprintf(izard, "%d", data);
+    sprintf(izard, "%lu", data);// debug code to set centibeat count on display
     printStr(izard, row, col);
 }
-// het uitwerken van verschillende senarios
-// zoals het verbinden
-// het synchroniseren
-// verwisselen van modus
